@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Site 1 - index</title>
+
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://*.googleapis.com; object-src 'self'">
+            
+        <!-- Local stylesheet -->
+        <link type='text/css' rel='stylesheet' href='css/style.css'>
+
+        <!-- Distant stylesheet -->
+        <link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto%3A400%2C700&amp;ver=5.2" media="all">
+        
+        <!-- Distant javascript -->
+        <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+        
+        <!-- Local javascript -->
+        <script type='text/javascript' src='js/script.js'></script>
+
+</head>
+    <body>
+
+        <h1>Site 1 - index</h1>
+
+        <!-- Local image -->
+        <div>Image locale (interne au zip, avec src='img/massa.png') :</div>
+        <img src="img/massa.png">
+
+        <br><br>
+        <!-- Distant image -->
+        <div>Image distante (externe au zip, avec src='https://...') :</div>
+        <img src="https://massa.net/_nuxt/img/logo.4c211ae.svg">
+
+        <br><br>
+        <!-- Debug js -->
+        <div>JS Script test :</div>
+        <div id="debug_result">WIP</div>
+
+        <br><br>
+        <!-- Links-->
+        <div>Lien interne au site (page2.html):</div>
+        <a href="page2.html">Aller sur la page 2</a>
+
+        <br><br>
+        <div>Lien vers un autre site massa://</div>
+        <a href="massa://site2">Aller sur le site 2</a>
+
+        <br><br>
+        <div>Lien vers un site http</div>
+        <a href="https://www.google.com">Aller sur Google</a>
+
+    </body>
+</html>

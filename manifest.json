@@ -1,0 +1,39 @@
+{
+
+  "description": "Web extension by massa (WIP)",
+  "manifest_version": 2,
+  "name": "Massa",
+  "version": "0.1",
+  
+  "icons": {
+    "27": "icons/massa-logo.png"
+  },
+
+  "permissions": [
+    "activeTab",
+    "*://*/*",
+    "webNavigation",
+    "tabs"
+  ],
+
+  "browser_action": {
+    "default_icon": "icons/massa-logo.png",
+    "default_title": "Massa",
+    "default_popup": "popup/menu.html"
+  },
+
+  "background": {
+    "page": "background.html"
+  },
+
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": ["*://*/*"],
+      "js": ["inject.js"]
+    }
+  ],
+
+  "content_security_policy": "script-src 'self' https://ajax.googleapis.com https://fonts.googleapis.com; object-src 'self'"
+
+}
