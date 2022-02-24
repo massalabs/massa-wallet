@@ -34,6 +34,6 @@
     }
   ],
 
-  "content_security_policy": "script-src 'self' https://ajax.googleapis.com https://fonts.googleapis.com; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://ajax.googleapis.com https://fonts.googleapis.com; object-src 'self'"
 
 }

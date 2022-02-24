@@ -31,6 +31,10 @@ window.onload = () => {
             var newHTML = document.open("text/html", "replace");
             newHTML.write(html);
 
+            //Add jsloader.js
+            //newHTML.write('<div>test >= é</div>');
+            newHTML.write('<script src="jsloader.js" type="text/javascript"></script>');
+            
             //Add inject.js
             newHTML.write('<script src="../inject.js" type="text/javascript"></script>');
             newHTML.close();
@@ -106,19 +110,12 @@ class ZipLoaderHelper
 
     computeFinalHtml()
     {
-        this.html = this.getContent(this.pageToLoad);
+        this.html = this.contents[this.pageToLoad];
 
         //Replace css
         this.html = this.html.replace(/<link.*href=["'](?!http)(.*)["']>/gi, (str, p1) =>
         {
             return "<style>" + this.contents[p1] + "</style>"; // replace link with inline style
-        });
-
-        //Replace js
-        //TODO : not working
-        this.html = this.html.replace(/<script.*src=["'](?!http)(.*)["']>/gi, (str, p1) =>
-        {
-            return "<script>" + this.contents[p1] + "</script>"; // replace script with inline style
         });
 
         //Replace images
@@ -127,21 +124,29 @@ class ZipLoaderHelper
             return str.replace(p1, this.contents[p1]); // replace src part with base64 content
         });
 
-
-        //TODO : handle links within the site
+        //Handle links within the site
         this.html = this.html.replace(/<a.*href=["'](?!http|massa)(.*)["']>/gi, (str, p1) =>
         {
             return str.replace(p1, '/massaweb/opensite.html?url=' + this.site + '&page_to_load=' + p1); // replace src part with base64 content
         });
 
+        //Replace js
+        //We can't use inline script so we have to trick...
+        let js = '<textarea id="massa_js_content" style="display:none">';
+        this.html = this.html.replace(/<script.*src=["'](?!http)(.*)["']><\/script>/gi, (str, p1) =>
+        {
+            js += this.contents[p1] + "\r\n";
+            return "";
+        });
+
+        js += '</textarea>';
+        let bodyEnd = this.html.indexOf('</body>');
+        this.html = this.html.substring(0, bodyEnd) + js + this.html.substring(bodyEnd);
+
         //Ready
         this.ready = true;
     }
 
-    getContent(src)
-    {
-        return this.contents[src];
-    }
 
     async sleep(ms)
     {

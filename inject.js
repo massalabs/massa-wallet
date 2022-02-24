@@ -1,5 +1,9 @@
-window.onload = () =>
-{
+(function() {
+
+    if (window.hasRun)
+        return;
+    window.hasRun = true;
+
     let links = document.querySelectorAll('a');
     for (let i = 0; i < links.length; i++)
     {
@@ -14,7 +18,8 @@ window.onload = () =>
         };
     }
 
-    console.log(links.length + ' links parsed');
-};
+    //console.log(links.length + ' links parsed');
 
-console.log('inject loaded');
+})();
+
+//console.log('inject loaded');
