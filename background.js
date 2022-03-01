@@ -1,4 +1,4 @@
-
+//Redirect massa://site_name to massaweb/opensite.html?url=site_name
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) =>
 {
     //console.log('going to ' + details.url)
@@ -12,12 +12,6 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) =>
     {
         let siteToLoad = details.url.substring(massaProtocolIndex + massaPrefix.length);
         //console.log('DETECTED massa://' + siteToLoad);
-        
-        //TODO : go to opensite on the same tab index (instead of new tab)
-
-        chrome.tabs.create({
-            url: "massaweb/opensite.html?url=" + siteToLoad
-          });
-        chrome.tabs.remove(details.tabId);
+        chrome.tabs.update(details.tabId, { url: "massaweb/opensite.html?url=" + siteToLoad });
     }
 });

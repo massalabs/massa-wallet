@@ -30,10 +30,10 @@
     {
       "all_frames": true,
       "matches": ["*://*/*"],
-      "js": ["inject.js"]
+      "js": ["lib/jquery.min.js", "inject.js"]
     }
   ],
 
-  "content_security_policy": "script-src 'self' 'unsafe-eval' https://ajax.googleapis.com https://fonts.googleapis.com; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://ajax.googleapis.com; object-src 'self'"
 
 }

@@ -3,9 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>Site 1 - index</title>
-
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' https://*.googleapis.com; object-src 'self'">
-            
+ 
         <!-- Local stylesheet -->
         <link type='text/css' rel='stylesheet' href='css/style.css'>
 
@@ -26,6 +24,8 @@
         <!-- Local image -->
         <div>Image locale (interne au zip, avec src='img/massa.png') :</div>
         <img src="img/massa.png">
+        <div>Image locale (interne au zip, avec src='img/massa.svg') :</div>
+        <img src="img/massa.svg">
 
         <br><br>
         <!-- Distant image -->
@@ -36,6 +36,10 @@
         <!-- Debug js -->
         <div>JS Script test :</div>
         <div id="debug_result">WIP</div>
+
+        <script type='text/javascript'>alert('inline script working');</script>
+        <button type="button" onclick="javascript:alert('inline click working');">Test</button>
+        <button type="button" onclick="alert('inline click2 working');">Test2</button>
 
         <br><br>
         <!-- Links-->

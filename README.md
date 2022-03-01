@@ -23,6 +23,3 @@ La démo permet uniquement de naviguer localement sur des sites au format .zip, 
 Il suffit de taper dans la barre d'adresse massa://nom_du_fichier_zip
 
 Si vous ajouter d'autres fichiers zip, il faudra recharger l'extension dans le navigateur (sur chrome://extensions ou about:debugging) pour qu'ils deviennent accessibles.
-
-## Problème connu
-Les scripts JS interne au zip ne fonctionnent pas pour le moment.
