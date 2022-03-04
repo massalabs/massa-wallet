@@ -213,7 +213,7 @@ class ZipLoaderHelper
         //Remove the on... part and add custom_id
         for (var i in matches)
         {
-            if (matches[i][0].indexOf('http-equiv')) continue;
+            if (matches[i][0].indexOf('http-equiv') >= 0) continue;
 
             var jsCode = matches[i][5].replace('javascript:', '');
             var id = "my_app_identifier_" + i;
