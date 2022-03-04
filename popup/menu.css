@@ -1,3 +1,68 @@
+/***************************************************************************************************************
+* GLOBAL
+***************************************************************************************************************/
 html, body {
-    width: 200px;
+    width: 400px;
+    background: linear-gradient(90deg,#172230 50.03%,#0c1219 85.82%);
+    color: white;
+    
+    font-family: "TT Commons";
+    font-size: 15px;
+    padding: 10px;
 }
+
+*, select, input, textarea { box-sizing: border-box; font-family: "TT Commons"; font-size: 15px; }
+
+a { font-family: "Maison Neue Mono"; color:white; transition: opacity .5s;}
+a:hover { opacity: .5; }
+
+.btn
+{
+    background-color: #e74e4e;
+    padding: 6px 15px;
+    border-radius: 100px;
+    letter-spacing: .05em;
+    width: fit-content;
+    transition: transform .5s;
+    color:white; 
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+}
+.btn:hover { transform: scale(1.1); } 
+.btn:disabled { background-color: grey; }
+.btn:disabled:hover { transform: scale(1); } 
+
+.popup_title { font-size: 24px; margin-top: 20px; }
+
+/***************************************************************************************************************
+* HEADER
+***************************************************************************************************************/
+.header > * { display: inline-block; vertical-align: middle; }
+.header > img { margin-right: 20px; }
+
+
+/***************************************************************************************************************
+* WALLET
+***************************************************************************************************************/
+.wallet { margin: 20px 0; }
+.wallet_header > * { font-size: 18px; }
+.wallet_line { display: flex; }
+.wallet_addr { width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid; padding: 2px; }
+.wallet_balance { width: 100px; text-align: center; border-right: 1px solid; padding: 2px; }
+.wallet_actions { width: 60px; display: flex; justify-content: space-around; padding: 2px; }
+.wallet_copy_addr { width: 16px; height: 16px; background-image: url(../img/copy.png); background-size: cover; background-repeat: no-repeat; cursor: pointer; }
+.wallet_send_from { width: 16px; height: 16px; background-image: url(../img/arrow.png); background-size: contain; background-repeat: no-repeat; cursor: pointer; }
+
+#wallet_addresses { font-size: 12px; margin-bottom: 10px; }
+
+[name=priv_key] { margin: 5px 0; padding: 6px 10px; font-size: 12px; width: 300px; }
+
+
+/***************************************************************************************************************
+* TRANSACTION
+***************************************************************************************************************/
+.transaction_line { display: flex; flex-direction: row; align-items: center; }
+.transaction_left { width: 60px; }
+.transaction_right { width: 295px; }
+#send_transaction { display:block; margin: 10px auto; }

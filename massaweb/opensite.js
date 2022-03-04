@@ -1,4 +1,4 @@
-window.onload = () => {
+window.onload = async () => {
 
     let params = new URLSearchParams(window.location.search);
     let site = params.get('url');
@@ -8,39 +8,54 @@ window.onload = () => {
 
     document.getElementById('site_name').innerHTML = site;
 
+    //TODO : params
+    if (site == 'testblockchain')
+    {
+        let network = new Network();
+        var bytes = await network.getZipFile();
+
+        openZip(bytes, site, pageToLoad);
+        return;
+    }
+
+    //TMP : internal zip file
     let zipFile = '../' + site + '.zip';
     console.log("opening : " + zipFile);
-
 
     JSZipUtils.getBinaryContent(zipFile, async function(err, data) {
         if(err) {
             throw err; // or handle err
         }
-    
-        JSZip.loadAsync(data).then(async function (zip) {
 
-            //Load files
-            let helper = new ZipLoaderHelper(zip);
-            let html = await helper.load(site, pageToLoad);
-
-            //Replace html content
-            var newHTML = document.open("text/html", "replace");
-            newHTML.write(html);
-
-            //Add jquery
-            newHTML.write('<script src="../lib/jquery.min.js" type="text/javascript"></script>');
-
-            //Add jsloader.js
-            newHTML.write('<script src="jsloader.js" type="text/javascript"></script>');
-            
-            //Add inject.js
-            newHTML.write('<script src="../inject.js" type="text/javascript"></script>');
-
-            newHTML.close();
-            
-        });
+        openZip(data, site, pageToLoad);
     });
 };
+
+function openZip(data, site, pageToLoad)
+{
+    JSZip.loadAsync(data).then(async function (zip) {
+
+        //Load files
+        let helper = new ZipLoaderHelper(zip);
+        let html = await helper.load(site, pageToLoad);
+
+        //Replace html content
+        var newHTML = document.open("text/html", "replace");
+        newHTML.write(html);
+
+        //Add jquery
+        newHTML.write('<script src="../lib/jquery.min.js" type="text/javascript"></script>');
+
+        //Add jsloader.js
+        newHTML.write('<script src="jsloader.js" type="text/javascript"></script>');
+        
+        //Add inject.js
+        newHTML.write('<script src="../inject.js" type="text/javascript"></script>');
+
+        newHTML.close();
+        
+    });
+}
 
 //This class handles files in the zip and do html rewriting
 class ZipLoaderHelper
@@ -177,7 +192,7 @@ class ZipLoaderHelper
         var matches = [];
         var match = null;
     
-        //Find on events inside html
+        //Find 'on...' events inside html
         var pattern = /(<(.*?)on([a-zA-Z]+)\s*=\s*('|")(.*)('|")(.*?))(>)/mgi;
     
         while (match = pattern.exec(this.html)) {
@@ -189,6 +204,8 @@ class ZipLoaderHelper
             }
             matches.push(arr);
         }
+
+        console.log(matches);
         
         var items_with_events = [];
         var compiledHtml = this.html;
@@ -196,6 +213,8 @@ class ZipLoaderHelper
         //Remove the on... part and add custom_id
         for (var i in matches)
         {
+            if (matches[i][0].indexOf('http-equiv')) continue;
+
             var jsCode = matches[i][5].replace('javascript:', '');
             var id = "my_app_identifier_" + i;
 
@@ -218,7 +237,7 @@ class ZipLoaderHelper
             + items_with_events[i].code
             + '});'
         }
-        console.log(js);
+        //console.log(js);
 
         return js;
     }

@@ -3,13 +3,19 @@
     <head>
         <meta charset="utf-8">
         <title>Massa</title>
-            
+        
+        <link type='text/css' rel='stylesheet' href='fonts.css'>
         <link type='text/css' rel='stylesheet' href='menu.css'>
 
         <script type='text/javascript' src='../lib/jquery.min.js'></script>
         <script type='text/javascript' src='../lib/browserified.js'></script>
+        <script type='text/javascript' src='../lib/decimal.js'></script>
         <script type='text/javascript' src='../lib/bn.js'></script>
         <script type='text/javascript' src='../lib/secp256k1.js'></script>
+
+        <script type='text/javascript' src='../massa/Storage.js'></script>
+        <script type='text/javascript' src='../massa/Wallet.js'></script>
+        <script type='text/javascript' src='../massa/Network.js'></script>
 
         <script type='text/javascript' src='menu.js'></script>
 
@@ -19,13 +25,70 @@
 
     <body>
 
-        <img src="massa.png">
+        <div class="header">
 
-        <div>Type massa://site1 or <br>massa://site2 in url bar to see website in zip format</div>
-        <div>You can also use the links below : </div>
-        <a target='_blank' href="massa://site1">massa://site1</a>
-        <a target='_blank' href="massa://site2">massa://site2</a>
+            <img src="massa.png">
+            <div>
+                <span>Network : </span>
+                <select id="select_network">
+                    <option value="0" selected>Local</option>
+                    <option value="1">Testnet</option>
+                    <option value="2" disabled>Mainnet</option>
+                </select>
+            </div>
+        </div>
 
-        <button type="button" id='generate_key'>Test Key</button>
+        <div class="wallet">
+            <div class="wallet_header wallet_line">
+                <div class="wallet_addr">Addresses</div>
+                <div class="wallet_balance">Balances</div>
+                <div class="wallet_actions">Actions</div>
+            </div>
+
+            <div id="wallet_addresses"></div>
+
+            Create new address : <button type="button" class="btn" id="add_address">Add</button>
+            <br>
+            Add existing address : <br>
+            <input type="text" name="priv_key" placeholder="Enter you private key">
+            <button type="button" class="btn" id="add_key">Add</button>
+
+        </div>
+
+        <div class="transaction">
+            <div class="popup_title">Transaction :</div>
+            <div class="transaction_line">
+                <span class="transaction_left">From : </span>
+                <select class="transaction_right" id="from_addr"></select>
+            </div>
+            <div class="transaction_line">
+                <span class="transaction_left">To : </span>
+                <input class="transaction_right" type="text" id="to_addr" placeholder="Enter destination address">
+            </div>
+            <div class="transaction_line">
+                <span class="transaction_left">Amount : </span>
+                <input class="transaction_right" type="text" id="amount" placeholder="Enter amount">
+            </div>
+            <div class="transaction_line">
+                <span class="transaction_left">Fees : </span>
+                <input class="transaction_right" type="text" id="fees" placeholder="Enter fees">
+            </div>
+            <div>
+                <button class='btn' type="button" id="send_transaction">Envoyer</button>
+            </div>
+        </div>
+
+        <div class="zip_test">
+            <div class="popup_title">Zip (debug) :</div>
+            Type massa://site1 or massa://site2 in url bar to see website in zip format.<br>
+            <br>
+            You can also use the links below :<br>
+            <a target='_blank' href="massa://site1">massa://site1</a><br>
+            <a target='_blank' href="massa://site2">massa://site2</a><br>
+            <br>
+            <a target='_blank' href="massa://testblockchain">test blockchain</a><br>
+        </div>
+        
+        
     </body>
 </html>

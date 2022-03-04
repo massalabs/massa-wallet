@@ -10,10 +10,11 @@
   },
 
   "permissions": [
-    "activeTab",
     "*://*/*",
+    "activeTab",
     "webNavigation",
-    "tabs"
+    "tabs",
+    "storage"
   ],
 
   "browser_action": {
