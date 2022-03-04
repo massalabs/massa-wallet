@@ -205,7 +205,7 @@ class ZipLoaderHelper
             matches.push(arr);
         }
 
-        console.log(matches);
+        //console.log(matches);
         
         var items_with_events = [];
         var compiledHtml = this.html;
