@@ -8,21 +8,38 @@ class Network
 {
     constructor()
     {
-        this.currentNetwork = NETWORK_LOCAL;
-    }
-
-    async loadNetwork()
-    {
-        let res = await Storage.get('network');
-        if (res !== null)
-            this.currentNetwork = res;
+        this.currentNetwork = NETWORK_TESTNET;
     }
 
     setNetwork(network)
     {
         this.currentNetwork = network;
+    }
 
-        Storage.set('network', network);
+    async getBalances(addresses)
+    {
+        if (addresses.length == 0) 
+            return [];
+
+        return new Promise((resolve, reject) => 
+        {
+            this.request('get_addresses', [addresses], (resJson) =>
+            {
+                let res = [];
+                for (let i = 0; i < resJson.length; i++) 
+                {
+                    let address = resJson[i].address;
+                    let balance = resJson[i].ledger_info.final_ledger_info.balance;
+                    let candidateBalance = resJson[i].ledger_info.candidate_ledger_info.balance;
+                    res.push({ address, balance, candidateBalance });
+                }
+
+                resolve(res);
+            }, (e) =>
+            {
+                reject(e);
+            });
+        });
     }
 
     request(resource, data, completion_callback, error_callback)
@@ -96,43 +113,6 @@ class Network
             xhr.send();
         });
     }
-
-    async getZipFile()
-    {
-        var data = JSON.stringify({
-            "jsonrpc": "2.0",
-            "method": "get_addresses",
-            "id": 111,
-            "params": [
-              [
-                "9mvJfA4761u1qT8QwSWcJ4gTDaFP5iSgjQzKMaqTbrWCFo1QM"
-              ]
-            ]
-          });
-
-        var xhr = new XMLHttpRequest();
-        // xhr.withCredentials = true;
-
-        return new Promise((resolve, reject) => 
-        {
-            xhr.onreadystatechange = function ()
-            {
-                if(this.readyState === 4) {
-                    try {
-                        let json_response = JSON.parse(this.responseText);
-                        let zip_base64 = String.fromCharCode(...json_response['result'][0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
-                        let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
-                        resolve(zip_bytes);
-                    }
-                    catch(e) { reject(e); }
-                }
-            }
-
-            xhr.open("POST", "http://145.239.66.206:33035/api/v2");
-            xhr.setRequestHeader("Content-Type", "application/json");
-
-            xhr.send(data);
-            
-        });
-    }
 }
+
+export default Network;

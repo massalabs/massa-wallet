@@ -35,6 +35,54 @@ a:hover { opacity: .5; }
 
 .popup_title { font-size: 24px; margin-top: 20px; }
 
+
+/*******************************************************************************************************************
+/* MESSAGES
+/******************************************************************************************************************/
+.message_box_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 98;
+    background-color: rgba(0, 0, 0, 0.8);
+    text-align: center;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+.message_box {
+    width: 20%;
+    background-color:white;
+    min-width: 360px;
+}
+.box_title { background-color: #172230; color: #e74e4e; font-size: 18px; padding: 5px; }
+.box_message { padding: 10px; max-height: 600px; overflow: auto; color: black; }
+.box_buttons button { margin: 5px 10px 10px; height: 30px; font-size: 15px; }
+/*.box_buttons button:first-child { background-color: #009fca; border-color: #009fca; color:white; }*/
+.box_message textarea { width: 100%; height: 100px; resize: none; }
+
+/***************************************************************************************************************
+* PASSWORD CREATION / CONNECTION
+***************************************************************************************************************/
+.main_container, .create_password_container, .password_container, .recover_container { display: none; }
+.password_container { text-align: center; }
+.password_container > * { margin-top: 10px; }
+.create_password_container { text-align: center; }
+.mnemonic_link { text-decoration: underline; cursor: pointer; }
+.form_left { display: inline-block; width: 250px; }
+#wallet_create { margin-top: 10px; }
+
+.recover_container { text-align: center; }
+#mnemonic { resize: none; width: 80%; }
+#mnemonic_send { margin-top: 10px; }
+
+#recover_success { display: none; font-size: 18px; }
+
+#export_wallet { cursor: pointer; font-size: 12px; text-decoration: underline; margin-bottom: 10px; display: inline-block; }
+
+
 /***************************************************************************************************************
 * HEADER
 ***************************************************************************************************************/

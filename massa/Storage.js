@@ -1,8 +1,8 @@
 let IS_CHROME = /Chrome/.test(navigator.userAgent);
 
-let storageArea = 'local'; //TODO : 'sync' once published
+let storageArea = 'local'; //could be 'sync' once published
 
-let Storage = {
+export default Storage = {
 
     'get': async (key) =>
     {
