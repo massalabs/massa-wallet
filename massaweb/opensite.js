@@ -9,28 +9,13 @@ window.onload = async () => {
     document.getElementById('site_name').innerHTML = site;
 
     //TODO : params
-    if (site == 'testblockchain')
-    {
-        var bytes = await getZipFile();
+    var site_address = await resolve(site)
+    var bytes = await getZipFile(site_address);
 
-        openZip(bytes, site, pageToLoad);
-        return;
-    }
-
-    //TMP : internal zip file
-    let zipFile = '../' + site + '.zip';
-    console.log("opening : " + zipFile);
-
-    JSZipUtils.getBinaryContent(zipFile, async function(err, data) {
-        if(err) {
-            throw err; // or handle err
-        }
-
-        openZip(data, site, pageToLoad);
-    });
+    openZip(bytes, site_address, pageToLoad);
 };
 
-async function getZipFile()
+async function resolve(site)
 {
     var data = JSON.stringify({
         "jsonrpc": "2.0",
@@ -38,13 +23,54 @@ async function getZipFile()
         "id": 111,
         "params": [
           [
-            "9mvJfA4761u1qT8QwSWcJ4gTDaFP5iSgjQzKMaqTbrWCFo1QM"
+            // DNS address
+            "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP"
           ]
         ]
       });
 
     var xhr = new XMLHttpRequest();
-    // xhr.withCredentials = true;
+    xhr.withCredentials = true;
+
+    return new Promise((resolve, reject) => 
+    {
+        xhr.onreadystatechange = function ()
+        {
+            if(this.readyState === 4) {
+                try {
+                    let json_response = JSON.parse(this.responseText);
+                    let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site))
+                    // TODO: handle entry missing
+                    let site_address = String.fromCharCode(...json_response['result'][0]['sce_ledger_info']['datastore'][site_encoded])
+                    resolve(site_address);
+                }
+                catch(e) { reject(e); }
+            }
+        }
+
+        xhr.open("POST", "https://test.massa.net/api/v2");
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        xhr.send(data);
+        
+    });
+}
+
+async function getZipFile(site_address)
+{
+    var data = JSON.stringify({
+        "jsonrpc": "2.0",
+        "method": "get_addresses",
+        "id": 111,
+        "params": [
+          [
+            site_address
+          ]
+        ]
+      });
+
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
 
     return new Promise((resolve, reject) => 
     {
@@ -61,7 +87,7 @@ async function getZipFile()
             }
         }
 
-        xhr.open("POST", "http://145.239.66.206:33035/api/v2");
+        xhr.open("POST", "https://test.massa.net/api/v2");
         xhr.setRequestHeader("Content-Type", "application/json");
 
         xhr.send(data);
