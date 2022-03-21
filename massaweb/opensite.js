@@ -11,8 +11,7 @@ window.onload = async () => {
     //TODO : params
     if (site == 'testblockchain')
     {
-        let network = new Network();
-        var bytes = await network.getZipFile();
+        var bytes = await getZipFile();
 
         openZip(bytes, site, pageToLoad);
         return;
@@ -30,6 +29,45 @@ window.onload = async () => {
         openZip(data, site, pageToLoad);
     });
 };
+
+async function getZipFile()
+{
+    var data = JSON.stringify({
+        "jsonrpc": "2.0",
+        "method": "get_addresses",
+        "id": 111,
+        "params": [
+          [
+            "9mvJfA4761u1qT8QwSWcJ4gTDaFP5iSgjQzKMaqTbrWCFo1QM"
+          ]
+        ]
+      });
+
+    var xhr = new XMLHttpRequest();
+    // xhr.withCredentials = true;
+
+    return new Promise((resolve, reject) => 
+    {
+        xhr.onreadystatechange = function ()
+        {
+            if(this.readyState === 4) {
+                try {
+                    let json_response = JSON.parse(this.responseText);
+                    let zip_base64 = String.fromCharCode(...json_response['result'][0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
+                    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
+                    resolve(zip_bytes);
+                }
+                catch(e) { reject(e); }
+            }
+        }
+
+        xhr.open("POST", "http://145.239.66.206:33035/api/v2");
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        xhr.send(data);
+        
+    });
+}
 
 function openZip(data, site, pageToLoad)
 {

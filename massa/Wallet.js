@@ -1,22 +1,21 @@
+//TODO xbqcrypto
+
 class Wallet
 {
     constructor(network)
     {
         this.network = network;
-        this.accounts = {};
 
+        this.accounts = {};
         this.privKeys = [];
     }
 
-    async loadAccounts()
+    async loadAccounts(privKeys)
     {
-        let res = await Storage.get('privKeys');
-        if (res)
-        {
-            this.privKeys = res;
-            for (let i in this.privKeys)
-                this.addAccount(this.privKeys[i], false);
-        }
+        this.accounts = {};
+        this.privKeys = [];
+        for (let i in privKeys)
+            this.addAccount(privKeys[i]);
     }
 
     hasAccount(addr)
@@ -24,10 +23,16 @@ class Wallet
         return this.accounts.hasOwnProperty(addr);
     }
 
-    //Add new account, or existing account with private key
-    addAccount(privKeyTxt = null, save = true)
+    getAddresses()
     {
-        privKeyTxt = privKeyTxt ? privKeyTxt : xbqcrypto.deduce_private_base58check(window.crypto.getRandomValues(new Uint8Array(32)));
+        return Object.keys(this.accounts);
+    }
+
+    //Add new account, or existing account with private key
+    addAccount(privKeyTxt = null)
+    {
+        let randomBytes = window.crypto.getRandomValues(new Uint8Array(32));
+        privKeyTxt = privKeyTxt ? privKeyTxt : xbqcrypto.deduce_private_base58check(randomBytes);
 
         let account = this._parseKey(privKeyTxt);
         if (this.hasAccount(account.address))
@@ -36,15 +41,19 @@ class Wallet
             return false;
         }
 
+        account.bytes = randomBytes;
+
         this.accounts[account.address] = account;
-        
-        //Save key in storage
-        if (save)
-        {
-            this.privKeys.push(privKeyTxt);
-            Storage.set('privKeys', this.privKeys);
-        }
-        return true;
+        this.privKeys.push(privKeyTxt);
+
+        return account.address;
+    }
+
+    addAccountFromBytes(bytes)
+    {
+        let addr = this.addAccount(xbqcrypto.deduce_private_base58check(bytes));
+        this.accounts[addr].bytes = bytes;
+        return addr;
     }
 
     //Sign content
@@ -69,10 +78,7 @@ class Wallet
     async send(fromAddr, toAddr, amountStr, feeStr, latestPeriod)
     {
         if (!this.hasAccount(fromAddr))
-        {
-            alert('wrong address'); // should not happen
-            return false;
-        }
+            return {'error': 'wrong address'}; // should not happen
 
         let account = this.accounts[fromAddr];
 
@@ -84,10 +90,7 @@ class Wallet
             sendamount_mul = sendamount.times(1e9);
         } catch(e) { sendamount_mul = -1; }
         if(isNaN(sendamount_mul) || (sendamount_mul < 0) || (sendamount_mul > (Math.pow(2, 64) - 1)))
-        {
-            alert('wrong amount');
-            return false;
-        }
+            return {'error': 'wrong amount'};
 
         //Fees
         let sendfee = null;
@@ -97,10 +100,7 @@ class Wallet
             sendfee_mul = sendfee.times(1e9);
         } catch(e) { sendamount_mul = -1; }
         if(isNaN(sendfee_mul) || (sendfee_mul < 0) || (sendfee_mul > (Math.pow(2, 64) - 1)))
-        {
-            alert('wrong fees');
-            return false;
-        }
+            return {'error': 'wrong fees'};
 
         //Send to addr
         let parsed = '';
@@ -111,20 +111,13 @@ class Wallet
         } catch(e) { sendtopkh = '' }
 
         if (sendtopkh == '')
-        {
-            alert('wrong destination address');
-            return false;
-        }
+            return {'error': 'wrong destination address'};
 
-        var confirm_message = "Transaction summary:\n"
-            + "\tFrom: " +  fromAddr + "\n"
-            + "\tTo: " +  toAddr + "\n"
-            + "\tAmount: " +  sendamount + " coins\n"
-            + "\tFee: " +  sendfee + " coins\n"
-            + "\nPlease confirm this transaction.";
-        
-        if (!confirm(confirm_message))
-            return false;
+        var trans_infos = ""
+            + "From: " +  fromAddr + "<br>"
+            + "To: " +  toAddr + "<br>"
+            + "Amount: " +  sendamount + " coins<br>"
+            + "Fee: " +  sendfee + " coins<br>";;
 
         try {
             var transac = {"content": {"op": {"Transaction": {}}}}
@@ -136,7 +129,9 @@ class Wallet
             transac.content.op.Transaction["amount"] = sendamount.toString()
             
             transac["signature"] = this.signContent(transac, account)
-        } catch(e) { alert('Error while generating transaction: ' + e); return false; }
+        } catch(e) { 
+            return {'error': 'Error while generating transaction: ' + e};
+        }
 
 
         //Send transaction
@@ -145,21 +140,17 @@ class Wallet
             this.network.request('send_operations', [[transac]], 
             (resJson) =>
             {
-                let res = false;
-                if(Array.isArray(resJson)) {
-                    alert('Transaction was successfully sent:\n' + resJson[0]);
-                    res = true;
+                if(Array.isArray(resJson))
+                {
+                    trans_infos += "Tx: " + resJson[0];
+                    resolve(trans_infos);
                 }
-                else {
-                    alert('An error occured while sending the transaction. Transaction not sent.');
-                }
-                resolve(res);
+                else
+                    reject({'error': 'An error occured while sending the transaction. Transaction not sent.' + resJson});
             },
             (err) =>
             {
-                alert('An error occured while sending the transaction. Transaction not sent.');
-                console.error(err);
-                resolve(false);
+                reject({'error': 'An error occured while sending the transaction. Transaction not sent.' + err});
             });
         })
     }
@@ -193,27 +184,6 @@ class Wallet
 
         return account;
     }
-
-
-/*
-        // Generating private key
-        const privateKey = Secp256k1.uint256(privateKeyBuf, 16)
-
-        // Generating public key
-        const publicKey = Secp256k1.generatePublicKeyFromPrivateKeyData(privateKey)
-        const pubX = Secp256k1.uint256(publicKey.x, 16)
-        const pubY = Secp256k1.uint256(publicKey.y, 16)
-
-
-        // Signing a digest
-        const digest = Secp256k1.uint256("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
-        const sig = Secp256k1.ecsign(privateKey, digest)
-        const sigR = Secp256k1.uint256(sig.r,16)
-        const sigS = Secp256k1.uint256(sig.s,16)
-
-        // Verifying signature
-        const isValidSig = Secp256k1.ecverify(pubX, pubY, sigR, sigS, digest)
-        console.assert(isValidSig === true, 'Signature must be valid')
-
-        */
 }
+
+export default Wallet;

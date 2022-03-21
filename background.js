@@ -15,3 +15,26 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) =>
         chrome.tabs.update(details.tabId, { url: "massaweb/opensite.html?url=" + siteToLoad });
     }
 });
+
+//Messages handling
+import MessageManager from './massa/MessageManager.js';
+let manager = new MessageManager();
+
+let IS_CHROME = /Chrome/.test(navigator.userAgent);
+let mybrowser = IS_CHROME ? chrome : browser;
+
+if (IS_CHROME)
+{
+    mybrowser.runtime.onMessage.addListener((request, sender, sendResponse) => 
+    {
+        manager.onMessage(request, sender, sendResponse);
+        return true; // need to return true to allow async
+    });
+}
+else
+{
+    mybrowser.runtime.onMessage.addListener(async (request, sender, sendResponse) => 
+    {
+        return manager.onMessage(request, sender, sendResponse);       
+    });
+}
