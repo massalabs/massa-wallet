@@ -76,10 +76,6 @@ class Network
                 }
             }
         });
-        
-        console.log('LALA')
-        console.log(NETWORK_ADDRESS[this.currentNetwork])
-
         xhr.open("POST", NETWORK_ADDRESS[this.currentNetwork]);
         xhr.setRequestHeader("Content-Type", "application/json");
         
