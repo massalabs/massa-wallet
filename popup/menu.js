@@ -73,14 +73,30 @@ class PopupController
         {
             console.log('click');
             this.btnSend.prop('disabled', true);
+            console.log(this.selectFrom)
             let from = this.selectFrom.children('option[selected]').text();
             let to = this.inputTo.val();
             let amount = this.inputAmount.val();
             let fees = this.inputFees.val();
 
             let latestPeriod;
+            let current_status;
             try {
-                latestPeriod = await this.network.getLatestPeriod() + 5;
+                current_status = await new Promise((resolve, reject) => 
+                {
+                    this.network.request('get_status', [], 
+                    (resJson) =>
+                    {
+                        let res = resJson;
+                        resolve(res);
+                    },
+                    (err) =>
+                    {
+                        console.error(err);
+                        resolve(false);
+                    });
+                })
+                latestPeriod = current_status.last_slot.period + 5;
             }
             catch(e) { alert('error getting last period'); console.error(e); return; }
 

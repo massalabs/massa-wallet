@@ -60,6 +60,9 @@ class Network
             }
         });
         
+        console.log('LALA')
+        console.log(NETWORK_ADDRESS[this.currentNetwork])
+
         xhr.open("POST", NETWORK_ADDRESS[this.currentNetwork]);
         xhr.setRequestHeader("Content-Type", "application/json");
         
@@ -111,24 +114,33 @@ class Network
           });
 
         var xhr = new XMLHttpRequest();
-        // xhr.withCredentials = true;
+        xhr.withCredentials = true;
+        xhr.timeout = 5000; // TODO : doesn't work on port 33035 ?
 
         return new Promise((resolve, reject) => 
         {
             xhr.onreadystatechange = function ()
             {
+                console.log('ICI')
                 if(this.readyState === 4) {
                     try {
                         let json_response = JSON.parse(this.responseText);
+                        console.log(json_response)
                         let zip_base64 = String.fromCharCode(...json_response['result'][0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
                         let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
                         resolve(zip_bytes);
                     }
-                    catch(e) { reject(e); }
+                    catch(e) { 
+                        reject(e);
+                    }
                 }
             }
 
-            xhr.open("POST", "http://145.239.66.206:33035/api/v2");
+            console.log('LA')
+            console.log(this.currentNetwork)
+            console.log(NETWORK_ADDRESS[this.currentNetwork])
+
+            xhr.open("POST", NETWORK_ADDRESS[this.currentNetwork]);
             xhr.setRequestHeader("Content-Type", "application/json");
 
             xhr.send(data);
