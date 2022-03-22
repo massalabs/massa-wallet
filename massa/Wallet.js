@@ -1,5 +1,3 @@
-//TODO xbqcrypto
-
 class Wallet
 {
     constructor(network)
@@ -135,24 +133,9 @@ class Wallet
 
 
         //Send transaction
-        return new Promise((resolve, reject) => 
-        {
-            this.network.request('send_operations', [[transac]], 
-            (resJson) =>
-            {
-                if(Array.isArray(resJson))
-                {
-                    trans_infos += "Tx: " + resJson[0];
-                    resolve(trans_infos);
-                }
-                else
-                    reject({'error': 'An error occured while sending the transaction. Transaction not sent.' + resJson});
-            },
-            (err) =>
-            {
-                reject({'error': 'An error occured while sending the transaction. Transaction not sent.' + err});
-            });
-        })
+        let resJson = await this.network.request('send_operations', [[transac]]);
+        trans_infos += "Tx: " + resJson[0];
+        return trans_infos;
     }
 
     _parseKey(privKeyTxt)
