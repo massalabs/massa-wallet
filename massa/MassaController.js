@@ -129,6 +129,10 @@ class MassaController
         await this.saveVault();
     }
 
+    getNetwork()
+    {
+        return this.network.networkAddress;
+    }
 
     //Transaction
     async sendTransaction(params)

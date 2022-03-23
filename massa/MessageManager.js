@@ -36,6 +36,12 @@ class MessageManager
             return this.answerChrome;
         }
 
+        if (request.action == 'get_network')
+        {
+            this.answerChrome = this.controller.getNetwork();
+            return this.answerChrome;
+        }
+
         //Other messages are limited within the extension (not the content script)
         let fromMe = sender.tab ? false : true;
         if (!fromMe) return;
@@ -111,7 +117,6 @@ class MessageManager
             this.answerChrome = {};
             return this.answerChrome;
         }
-
 
         //Transaction
         if (request.action == 'send_transaction')

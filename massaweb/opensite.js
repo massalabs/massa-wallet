@@ -1,71 +1,126 @@
+let IS_CHROME = /Chrome/.test(navigator.userAgent);
+let mybrowser = IS_CHROME ? chrome : browser;
+
 window.onload = async () => {
 
     let params = new URLSearchParams(window.location.search);
     let site = params.get('url');
     let pageToLoad = params.get('page_to_load');
     if (pageToLoad == null)
-        pageToLoad = 'index.html'; //TODO : default page
+        pageToLoad = 'index.html'; //TODO : default page configuration ?
 
     document.getElementById('site_name').innerHTML = site;
 
-    //TODO : params
-    if (site == 'testblockchain')
+    //TODO-TMP : internal zip file (remove)
+    /*
+    if (site == 'site1' || site == 'site2')
     {
-        var bytes = await getZipFile();
+        let zipFile = '../' + site + '.zip';
+        console.log("opening : " + zipFile);
 
-        openZip(bytes, site, pageToLoad);
+        JSZipUtils.getBinaryContent(zipFile, async function(err, data) {
+            if(err) {
+                throw err; // or handle err
+            }
+
+            openZip(data, site, pageToLoad);
+        });
         return;
-    }
+    }*/
 
-    //TMP : internal zip file
-    let zipFile = '../' + site + '.zip';
-    console.log("opening : " + zipFile);
-
-    JSZipUtils.getBinaryContent(zipFile, async function(err, data) {
-        if(err) {
-            throw err; // or handle err
-        }
-
-        openZip(data, site, pageToLoad);
-    });
+    var bytes = await getZipFile(site);
+    openZip(bytes, site, pageToLoad);
+    return;
 };
 
-async function getZipFile()
+
+//Get zip file from blockchain
+async function getZipFile(site)
 {
-    var data = JSON.stringify({
-        "jsonrpc": "2.0",
-        "method": "get_addresses",
-        "id": 111,
-        "params": [
-          [
-            "9mvJfA4761u1qT8QwSWcJ4gTDaFP5iSgjQzKMaqTbrWCFo1QM"
-          ]
-        ]
-      });
-
-    var xhr = new XMLHttpRequest();
-    // xhr.withCredentials = true;
-
-    return new Promise((resolve, reject) => 
+    //Get network address
+    let networkAddr = await new Promise((resolve) => 
     {
-        xhr.onreadystatechange = function ()
+        mybrowser.runtime.sendMessage({action: "get_network"}, (res) =>
         {
-            if(this.readyState === 4) {
-                try {
-                    let json_response = JSON.parse(this.responseText);
-                    let zip_base64 = String.fromCharCode(...json_response['result'][0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
-                    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
-                    resolve(zip_bytes);
-                }
-                catch(e) { reject(e); }
-            }
-        }
+            resolve(res);
+        });
+    });
 
-        xhr.open("POST", "http://145.239.66.206:33035/api/v2");
-        xhr.setRequestHeader("Content-Type", "application/json");
+    //console.log(networkAddr);
 
-        xhr.send(data);
+    //Get site address
+    let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
+    let params = [
+        [
+          // DNS address
+          "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP"
+        ]
+    ];
+    let json_response = await request(networkAddr, 'get_addresses', params);
+    console.log('site_encoded : ' + site_encoded)
+    console.log(json_response);
+
+    // TODO: handle entry missing
+    //TMP: force site_encoded to existing entry
+    site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
+    let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
+
+    params = [
+        [
+          site_address
+        ]
+    ];
+
+    //Get zip
+    //TODO : what is '2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud' ??
+    json_response = await request(networkAddr, 'get_addresses', params);
+    let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
+    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
+    
+    return zip_bytes;
+}
+
+//Promisify xhr and return json response
+async function request(address, resource, data)
+{
+    return new Promise((resolve, reject) =>
+    {
+        var rpcData = JSON.stringify({
+            "jsonrpc": "2.0",
+            "method": resource,
+            "params": data,
+            "id": 0
+        });
+    
+        var xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+        xhr.timeout = 5000; // TODO : doesn't work on port 33035 ?
         
+        xhr.addEventListener("readystatechange", function() 
+        {
+            if (this.readyState === 4) 
+            {
+                if (this.status === 200) 
+                {
+                    try {
+                        var response = JSON.parse(this.responseText);
+                    } catch(e) {
+                        reject('JSON.parse error: ' + String(e)) ;
+                    }
+                    if ("error" in response)
+                        reject(response.error);
+                    else
+                        resolve(response.result);
+                }
+                else
+                    reject('XMLHttpRequest error: ' + String(this.statusText));
+            }
+        });
+        
+        xhr.open("POST", address);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        
+        xhr.send(rpcData);
     });
 }
 
@@ -285,3 +340,4 @@ class ZipLoaderHelper
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
+
