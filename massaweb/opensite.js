@@ -62,7 +62,6 @@ async function getZipFile(site)
 
     // TODO: handle entry missing
     //TMP: force site_encoded to existing entry
-    site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
     let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
 
     params = [
