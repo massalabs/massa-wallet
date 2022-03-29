@@ -37,6 +37,8 @@ class MassaController
         if (this.mnemonic == '')
             this.mnemonic = this.vault.getMnemonic(this.wallet.accounts[addresses[0]].bytes);
 
+        this.network.init(this.wallet.accounts[addresses[0]], this.network.currentNetwork);
+
         await this.saveVault();
 
         return { network: this.network.currentNetwork, addresses };
@@ -89,8 +91,8 @@ class MassaController
 
     _onVaultLoaded(dataObj)
     {
-        this.network.setNetwork(dataObj.network);
         this.wallet.loadAccounts(dataObj.privKeys);
+        this.network.init(this.wallet.getDefaultAccount(), dataObj.network);
         this.mnemonic = dataObj.mnemonic;
     }
 
@@ -141,10 +143,27 @@ class MassaController
         try {
             latestPeriod = await this.network.getLatestPeriod() + 5;
         }
-        catch(e) { alert('error getting last period'); console.error(e); return; }
+        catch(e) { console.error(e); return {error: 'error getting last period'}; }
 
-        let res = await this.wallet.send(params.from, params.to, params.amount, params.fees, latestPeriod);
-        return res;
+        //console.log(params);
+
+        let fromAccount = this.wallet.accounts[params.from];
+        let res;
+        try {
+            res = await this.network.sendTransaction(fromAccount, params.to, params.amount, params.fees, latestPeriod);
+        }
+        catch(e) { console.error(e); return {error: 'error sending transaction'}; }
+
+        //let res = await this.wallet.send(params.from, params.to, params.amount, params.fees, latestPeriod);
+        //console.log(res);
+
+        var trans_infos = ""
+            + "From: " +  params.from + "<br>"
+            + "To: " +  params.to + "<br>"
+            + "Amount: " +  params.amount + " coins<br>"
+            + "Fee: " + params.fees + " coins<br>"
+            + "Tx: " + res[0];
+        return trans_infos;
     }
 
     async sleep(ms)

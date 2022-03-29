@@ -1,7 +1,11 @@
+
+const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
+const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
+
 let IS_CHROME = /Chrome/.test(navigator.userAgent);
 let mybrowser = IS_CHROME ? chrome : browser;
 
-window.onload = async () => {
+window.onload = () => {
 
     let params = new URLSearchParams(window.location.search);
     let site = params.get('url');
@@ -11,31 +15,12 @@ window.onload = async () => {
 
     document.getElementById('site_name').innerHTML = site;
 
-    //TODO-TMP : internal zip file (remove)
-    /*
-    if (site == 'site1' || site == 'site2')
-    {
-        let zipFile = '../' + site + '.zip';
-        console.log("opening : " + zipFile);
-
-        JSZipUtils.getBinaryContent(zipFile, async function(err, data) {
-            if(err) {
-                throw err; // or handle err
-            }
-
-            openZip(data, site, pageToLoad);
-        });
-        return;
-    }*/
-
-    var bytes = await getZipFile(site);
-    openZip(bytes, site, pageToLoad);
-    return;
+    getZipFile(site, pageToLoad);
 };
 
 
 //Get zip file from blockchain
-async function getZipFile(site)
+async function getZipFile(site, pageToLoad)
 {
     //Get network address
     let networkAddr = await new Promise((resolve) => 
@@ -50,37 +35,25 @@ async function getZipFile(site)
 
     //Get site address
     let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
-    let params = [
-        [
-          // DNS address
-          "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP"
-        ]
-    ];
-    let json_response = await request(networkAddr, 'get_addresses', params);
+    let json_response = await request(networkAddr, 'get_addresses', [[MASSA_DNS]]);
     console.log('site_encoded : ' + site_encoded)
     console.log(json_response);
 
     // TODO: handle entry missing
     //TMP: force site_encoded to existing entry
-    site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
+    //site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
     let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
 
-    params = [
-        [
-          site_address
-        ]
-    ];
-
     //Get zip
-    //TODO : what is '2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud' ??
-    json_response = await request(networkAddr, 'get_addresses', params);
-    let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
-    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
+    json_response = await request(networkAddr, 'get_addresses', [[site_address]]);
+    let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][MASSA_WEB]) ;
+    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
     
-    return zip_bytes;
+    openZip(zip_bytes, site, pageToLoad);
 }
 
 //Promisify xhr and return json response
+//TODO : use web3
 async function request(address, resource, data)
 {
     return new Promise((resolve, reject) =>
@@ -124,6 +97,8 @@ async function request(address, resource, data)
     });
 }
 
+
+//Open zip file
 function openZip(data, site, pageToLoad)
 {
     JSZip.loadAsync(data).then(async function (zip) {
