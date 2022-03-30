@@ -1,7 +1,3 @@
-
-const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
-const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
-
 let IS_CHROME = /Chrome/.test(navigator.userAgent);
 let mybrowser = IS_CHROME ? chrome : browser;
 
@@ -23,80 +19,16 @@ window.onload = () => {
 async function getZipFile(site, pageToLoad)
 {
     //Get network address
-    let networkAddr = await new Promise((resolve) => 
+    let zip_bytes/*networkAddr*/ = await new Promise((resolve) => 
     {
-        mybrowser.runtime.sendMessage({action: "get_network"}, (res) =>
+        mybrowser.runtime.sendMessage({'action': "get_zip_file", 'site': site}, (res) =>
         {
             resolve(res);
         });
     });
 
-    //console.log(networkAddr);
-
-    //Get site address
-    let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
-    let json_response = await request(networkAddr, 'get_addresses', [[MASSA_DNS]]);
-    console.log('site_encoded : ' + site_encoded)
-    console.log(json_response);
-
-    // TODO: handle entry missing
-    //TMP: force site_encoded to existing entry
-    //site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
-    let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
-
-    //Get zip
-    json_response = await request(networkAddr, 'get_addresses', [[site_address]]);
-    let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][MASSA_WEB]) ;
-    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
-    
     openZip(zip_bytes, site, pageToLoad);
 }
-
-//Promisify xhr and return json response
-//TODO : use web3
-async function request(address, resource, data)
-{
-    return new Promise((resolve, reject) =>
-    {
-        var rpcData = JSON.stringify({
-            "jsonrpc": "2.0",
-            "method": resource,
-            "params": data,
-            "id": 0
-        });
-    
-        var xhr = new XMLHttpRequest();
-        xhr.withCredentials = true;
-        xhr.timeout = 5000; // TODO : doesn't work on port 33035 ?
-        
-        xhr.addEventListener("readystatechange", function() 
-        {
-            if (this.readyState === 4) 
-            {
-                if (this.status === 200) 
-                {
-                    try {
-                        var response = JSON.parse(this.responseText);
-                    } catch(e) {
-                        reject('JSON.parse error: ' + String(e)) ;
-                    }
-                    if ("error" in response)
-                        reject(response.error);
-                    else
-                        resolve(response.result);
-                }
-                else
-                    reject('XMLHttpRequest error: ' + String(this.statusText));
-            }
-        });
-        
-        xhr.open("POST", address);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        
-        xhr.send(rpcData);
-    });
-}
-
 
 //Open zip file
 function openZip(data, site, pageToLoad)

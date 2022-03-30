@@ -36,9 +36,9 @@ class MessageManager
             return this.answerChrome;
         }
 
-        if (request.action == 'get_network')
+        if (request.action == 'get_zip_file')
         {
-            this.answerChrome = this.controller.getNetwork();
+            this.answerChrome = await this.controller.getZipFile(request.site);
             return this.answerChrome;
         }
 
