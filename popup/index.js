@@ -209,7 +209,6 @@ class PopupController
 
 
         //Send transaction
-        //TODO : show tx 
         this.btnSend.click(async () =>
         {
             this.btnSend.prop('disabled', true);

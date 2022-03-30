@@ -2,7 +2,7 @@ const NETWORK_LOCAL = 0;
 const NETWORK_TESTNET = 1;
 const NETWORK_MAINNET = 2;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2']
+const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2'];
 
 class Network
 {
@@ -10,12 +10,33 @@ class Network
     {
         this.currentNetwork = NETWORK_TESTNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
+
+        this.currentAccount = null;
+        this.web3Client = null;
+    }
+
+    init(account, network)
+    {
+        this.currentNetwork = network;
+        this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
+        this.setAccount(account);
     }
 
     setNetwork(network)
     {
         this.currentNetwork = network;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
+        this.web3Client = ClientFactory.createDefaultClient(this.networkAddress, this.currentAccount);
+    }
+
+    setAccount(account)
+    {
+        this.currentAccount = {
+            publicKey: account.b58cpubkey,
+            privateKey: account.b58cprivkey,
+            address: account.address
+        };
+        this.web3Client = ClientFactory.createDefaultClient(this.networkAddress, this.currentAccount);
     }
 
     async getBalances(addresses)
@@ -23,7 +44,9 @@ class Network
         if (addresses.length == 0) 
             return [];
 
-        let resJson = await this.request('get_addresses', [addresses]);
+        const resJson = await this.web3Client.publicApi().getAddresses(addresses);
+
+        //let resJson = await this.request('get_addresses', [addresses]);
         let res = [];
         for (let i = 0; i < resJson.length; i++) 
         {
@@ -37,39 +60,30 @@ class Network
 
     async getLatestPeriod()
     {
-        let res = await this.request('get_status', []);
+        const res = await this.web3Client.publicApi().getNodeStatus();
         return res.last_slot.period;
-        
-        //TODO : old tmp code, remove it
-        //var xhr = new XMLHttpRequest();
-        //var url = NETWORK_ADDRESS[this.currentNetwork] + "/info";
-        
-        //xhr.open('GET', url, true);
-        //xhr.setRequestHeader('Accept','text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
-        /*
-        return new Promise((resolve, reject) => 
-        {
-            xhr.onreadystatechange = function ()
-            {
-                if (this.readyState === 4) {
-                    if (this.status === 200) {
-                        try {
-                            var response = JSON.parse(this.responseText);
-                            resolve(response.last_period);
-                        } catch(e) {
-                            reject('JSON.parse error: ' + String(e));
-                        }
-                    }
-                    else {
-                        reject('XMLHttpRequest error: ' + String(this.statusText));
-                    }
-                }
-            };
-            xhr.send();
-        });
-        */
     }
 
+    async sendTransaction(fromAccount, toAddr, amount, fees)
+    {
+        //console.log(fromAccount);
+
+        const account = {
+            publicKey: fromAccount.b58cpubkey,
+            privateKey: fromAccount.b58cprivkey,
+            address: fromAccount.address
+        };
+
+        //console.log(account);
+
+        return await this.web3Client.wallet().sendTransaction({
+            fee: 0,
+            amount: 1,
+            recipientAddress: toAddr
+        }, account);
+    }
+
+    /* TODO : remove
     async request(resource, data)
     {
         return new Promise((resolve, reject) =>
@@ -111,7 +125,7 @@ class Network
             
             xhr.send(rpcData);
         });
-    }
+    }*/
 }
 
 export default Network;

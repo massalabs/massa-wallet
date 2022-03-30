@@ -16,6 +16,11 @@ class Wallet
             this.addAccount(privKeys[i]);
     }
 
+    getDefaultAccount()
+    {
+        return this.accounts[Object.keys(this.accounts)[0]];
+    }
+
     hasAccount(addr)
     {
         return this.accounts.hasOwnProperty(addr);
@@ -55,6 +60,7 @@ class Wallet
     }
 
     //Sign content
+    //TODO : not used
     signContent(transaction, account) 
     {    
         // Compute bytes compact
@@ -73,6 +79,7 @@ class Wallet
     }
 
     //Send amount to another address
+    /* TODO : remove
     async send(fromAddr, toAddr, amountStr, feeStr, latestPeriod)
     {
         if (!this.hasAccount(fromAddr))
@@ -115,7 +122,7 @@ class Wallet
             + "From: " +  fromAddr + "<br>"
             + "To: " +  toAddr + "<br>"
             + "Amount: " +  sendamount + " coins<br>"
-            + "Fee: " +  sendfee + " coins<br>";;
+            + "Fee: " +  sendfee + " coins<br>";
 
         try {
             var transac = {"content": {"op": {"Transaction": {}}}}
@@ -133,10 +140,10 @@ class Wallet
 
 
         //Send transaction
-        let resJson = await this.network.request('send_operations', [[transac]]);
-        trans_infos += "Tx: " + resJson[0];
+        //let resJson = await this.network.request('send_operations', [[transac]]);
+        //trans_infos += "Tx: " + resJson[0];
         return trans_infos;
-    }
+    }*/
 
     _parseKey(privKeyTxt)
     {
