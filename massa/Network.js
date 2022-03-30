@@ -50,8 +50,6 @@ class Network
             return [];
 
         const resJson = await this.web3Client.publicApi().getAddresses(addresses);
-
-        //let resJson = await this.request('get_addresses', [addresses]);
         let res = [];
         for (let i = 0; i < resJson.length; i++) 
         {
@@ -71,15 +69,11 @@ class Network
 
     async sendTransaction(fromAccount, toAddr, amount, fees)
     {
-        //console.log(fromAccount);
-
         const account = {
             publicKey: fromAccount.b58cpubkey,
             privateKey: fromAccount.b58cprivkey,
             address: fromAccount.address
         };
-
-        //console.log(account);
 
         return await this.web3Client.wallet().sendTransaction({
             fee: 0,
