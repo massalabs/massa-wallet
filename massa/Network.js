@@ -92,13 +92,11 @@ class Network
     {
         //Get site address
         let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
-        //let json_response = await request(networkAddr, 'get_addresses', [[MASSA_DNS]]);
         let json_response = await this.web3Client.publicApi().getAddresses([MASSA_DNS]);
 
         let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
 
         //Get zip
-        //json_response = await request(networkAddr, 'get_addresses', [[site_address]]);
         json_response = await this.web3Client.publicApi().getAddresses([site_address]);
         let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][MASSA_WEB]);
         let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
