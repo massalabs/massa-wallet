@@ -136,6 +136,11 @@ class MassaController
         return this.network.networkAddress;
     }
 
+    async getZipFile(site)
+    {
+        return this.network.getZipFile(site);
+    }
+
     //Transaction
     async sendTransaction(params)
     {
