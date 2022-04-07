@@ -1,16 +1,16 @@
 
 
 //Messages shortcuts
-function AskConfirm(message, onYes)
+function AskConfirm(message, onRes)
 {
 	return MessageBox(
 	{
-		'title': "Confirmation nécessaire",
+		'title': "Confirm",
 		'message': message,
 		'buttons': 
 		{
-			'Valider': onYes,
-			'Annuler': () => {}
+			'Valider': () => onRes(true),
+			'Annuler': () => onRes(false)
 		}
 	});
 }

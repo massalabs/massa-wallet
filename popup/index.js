@@ -28,6 +28,7 @@ class PopupController
 
         this.recovering = false;
         this.timeOutBalances = null;
+        this.timeOutMessages = null;
 
         this.initEvents();
 
@@ -49,6 +50,8 @@ class PopupController
                 {
                     this.mainContainer.show();
                     this.updateWallet(res.addresses);
+
+                    this.handlePendingMessages();
                 }
                 else
                     this.passwordContainer.show();
@@ -99,6 +102,8 @@ class PopupController
                 this.recovering = false;
 
                 this.updateBalances();
+
+                this.handlePendingMessages();
             });
         });
 
@@ -117,6 +122,8 @@ class PopupController
                  this.updateWallet(res.addresses);
 
                  this.updateBalances();
+
+                 this.handlePendingMessages();
              });
          });
 
@@ -225,6 +232,25 @@ class PopupController
                 this.btnSend.prop('disabled', false);
             });
         });
+
+        //TODO : tmp
+        //Replace click event on links with massa:// 
+        let links = document.querySelectorAll('a');
+        for (let i = 0; i < links.length; i++)
+        {
+            if (links[i].href.substring(0, 8) != 'massa://')
+                continue;
+            links[i].onclick = function()
+            {
+                let siteToLoad = this.href.substring(8);
+                
+                if (links[i].getAttribute('target') == '_blank')
+                    chrome.tabs.create({'url' : "/massaweb/opensite.html?url=" + siteToLoad });
+                else
+                    chrome.tabs.update(undefined, {'url' : "/massaweb/opensite.html?url=" + siteToLoad });
+                return false;
+            };
+        }
     }
 
 
@@ -345,5 +371,44 @@ class PopupController
         textarea.get(0).select();
         document.execCommand('copy');
         //navigator.clipboard.writeText(textarea.val()); // doesn't work : 'window not focused' error
+    }
+
+
+    handlePendingMessages()
+    {
+        mybrowser.runtime.sendMessage({action: "get_pending_messages"}, (res) =>
+        {
+            if (this.handleError(res))
+            {
+                this.timeOutMessages = null;
+                return;
+            }
+            //Show pending messages
+            if (res.length > 0)
+            {
+                //TODO : show all pending messages
+                this.handlePendingMessage(res[0], 0);
+            }
+
+            //TODO
+            //this.timeOutMessages = setTimeout(() => this.handlePendingMessages(), 5000);
+        });
+    }
+
+    handlePendingMessage(message, messageIndex)
+    {
+        if (message.type == 'signature')
+        {
+            AskConfirm("Sign content ?<br>" + message.content, (res) =>
+            {
+                mybrowser.runtime.sendMessage({action: "message_result", answer: res, message, messageIndex});
+                if (res)
+                {
+                    Message('signature done');
+                }
+                else
+                    Message('signature refused');
+            });
+        }
     }
 }

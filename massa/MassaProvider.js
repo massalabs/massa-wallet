@@ -6,9 +6,18 @@ class MassaProvider
 {
     constructor()
     {
+    }
+
+
+    //Sign json data
+    async signContent(jsonContent)
+    {
+        browser.browserAction.openPopup();
 
     }
 
+
+    //Could be like Metamask
     request({ method, params })
     {
         //TODO

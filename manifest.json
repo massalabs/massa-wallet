@@ -31,10 +31,9 @@
     {
       "all_frames": true,
       "matches": ["*://*/*"],
-      "js": ["lib/jquery.min.js", "inject.js", "lib/browserified.js"]
+      "js": ["lib/jquery.min.js", "inject.js"]
     }
   ],
 
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://ajax.googleapis.com; object-src 'self'"
-
 }

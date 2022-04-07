@@ -59,9 +59,8 @@ class Wallet
         return addr;
     }
 
-    //Sign content
-    //TODO : not used
-    signContent(transaction, account) 
+    //Sign transaction
+    signTransaction(transaction) 
     {    
         // Compute bytes compact
         let parsed_fee = parseInt(new Decimal(transaction.content.fee).times(1e9));
@@ -69,9 +68,18 @@ class Wallet
         let encoded_data = xbqcrypto.compute_bytes_compact(parsed_fee, transaction.content.expire_period,
         transaction.content.sender_public_key, 0, transaction.content.op.Transaction.recipient_address, parsed_amount)
     
+        return this.signContent(encoded_data);
+    }
+
+    //Sign bytes compact
+    signContent(bytesCompact)
+    {
+        //TODO : selected account
+        let account = this.getDefaultAccount();
+
         // Hash byte compact
-        let hash_encoded_data = xbqcrypto.hash_sha256(encoded_data)
-    
+        let hash_encoded_data = xbqcrypto.hash_sha256(bytesCompact);
+            
         // Signing a digest
         let digest = Secp256k1.uint256(hash_encoded_data)
         const sig = Secp256k1.ecsign(account.privkey, digest)

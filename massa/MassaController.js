@@ -17,6 +17,19 @@ class MassaController
         //State
         this.connected = false;
         this.mnemonic = '';
+
+        this.pendingMessages = [];
+    }
+
+    //Message
+    addMessage(message)
+    {
+        this.pendingMessages.push(message);
+    }
+
+    removeMessage(index)
+    {
+        this.pendingMessages.splice(index, 1);
     }
 
     //Vault
@@ -24,7 +37,10 @@ class MassaController
     {
         let vault = await Storage.get('vault');
         let addresses = this.wallet.getAddresses();
-        return {'hasVault' : vault !== null && typeof(vault) !== undefined, 'connected': this.connected, addresses };
+        return {'hasVault' : vault !== null && typeof(vault) !== undefined, 
+            'connected': this.connected, 
+            'pending' : this.pendingMessages,
+            addresses };
     }
 
     async initVault(password)
@@ -122,6 +138,12 @@ class MassaController
         let accounts = await this.network.getBalances(this.wallet.getAddresses());
         return accounts;
     }
+
+    signContent(content)
+    {
+        return this.wallet.signContent(content);
+    }
+
 
     //Network
     async setNetwork(network)
