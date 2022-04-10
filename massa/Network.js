@@ -75,6 +75,7 @@ class Network
             address: fromAccount.address
         };
 
+        //TODO : accoutn remove and signContent called 
         return await this.web3Client.wallet().sendTransaction({
             fee: 0,
             amount: 1,
@@ -87,6 +88,8 @@ class Network
         //Get site address
         let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
         let json_response = await this.web3Client.publicApi().getAddresses([MASSA_DNS]);
+
+        console.log(json_response);
 
         let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
 

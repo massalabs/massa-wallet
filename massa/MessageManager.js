@@ -8,6 +8,10 @@ class MessageManager
     constructor()
     {
         this.controller = new MassaController();
+
+        //TODO : handle this in a better way
+        this.userAnswer = null;
+        this.userData = null;
     }
 
     //For chrome
@@ -30,22 +34,58 @@ class MessageManager
 
     async _onMessage(request, sender, sendResponse)
     {
-        if (request.action == 'get_provider')
+        //Signatures
+        if (request.action == 'sign_content')
         {
-            this.answerChrome = {provider: this.controller.provider};
+            //Add pending message
+            this.controller.addMessage({type: 'signature', content: request.content});
+
+            //Open popup
+            //TODO : left and top not working in firefox
+            chrome.windows.create({ url: chrome.runtime.getURL("popup/index.html"), type: 
+            "popup", height : 700, width : 400/*, left: screen.availWidth - 400, top: 0*/ });
+
+            //TODO : handle this in a better way
+            this.userAnswer = null;
+            this.userData = null;
+            this.answerChrome = await new Promise(async (resolve, reject) =>
+            {
+                while (this.userAnswer === null) // wait till user has answered
+                {
+                    await this.sleep(100);
+                }
+                resolve(this.userData); // return html of the pageToLoad
+            });
             return this.answerChrome;
         }
 
+        if (request.action == 'get_pending_messages')
+        {
+            this.answerChrome = this.controller.pendingMessages; 
+            return this.answerChrome;
+        }
+
+        if (request.action == 'message_result')
+        {
+            if (request.message.type == 'signature')
+            {
+                this.userAnswer = request.answer;
+                if (this.userAnswer)
+                    this.userData = this.controller.signContent(request.message.content);
+
+                this.controller.removeMessage(request.messageIndex);
+            }
+        }
+
+
+        //ZIP
         if (request.action == 'get_zip_file')
         {
             this.answerChrome = await this.controller.getZipFile(request.site);
             return this.answerChrome;
         }
-
-        //Other messages are limited within the extension (not the content script)
-        let fromMe = sender.tab ? false : true;
-        if (!fromMe) return;
         
+
         //Vault
         if (request.action == 'get_state')
         {
@@ -127,6 +167,11 @@ class MessageManager
 
         this.answerChrome = {'error': 'request unknown', 'request': request};
         return this.answerChrome;
+    }
+
+    async sleep(ms)
+    {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 
