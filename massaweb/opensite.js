@@ -53,7 +53,7 @@ async function getZipFile(site)
     let params = [
         [
           // DNS address
-          "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP"
+          "2cVNfo79K173ddPwNezMi8WzvapMFojP7H7V4reCU2dk6QTeA"
         ]
     ];
     let json_response = await request(networkAddr, 'get_addresses', params);
@@ -63,7 +63,7 @@ async function getZipFile(site)
     // TODO: handle entry missing
     //TMP: force site_encoded to existing entry
     site_encoded = "2KRvgrvfLNL5Dh8N4P2BinHXkF7ZAnhcVfnBYnbUhvKzVgefd9";
-    let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
+    let site_address = String.fromCharCode(...json_response[0]['candidate_sce_ledger_info']['datastore'][site_encoded]);
 
     params = [
         [
@@ -74,7 +74,7 @@ async function getZipFile(site)
     //Get zip
     //TODO : what is '2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud' ??
     json_response = await request(networkAddr, 'get_addresses', params);
-    let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
+    let zip_base64 = String.fromCharCode(...json_response[0]['candidate_sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud']) 
     let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0))
     
     return zip_bytes;
