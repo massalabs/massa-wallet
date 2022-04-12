@@ -1,14 +1,15 @@
 const NETWORK_LOCAL = 0;
 const NETWORK_TESTNET = 1;
 const NETWORK_MAINNET = 2;
+const NETWORK_LABNET = 3;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2']
+const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2', 'http://145.239.66.206:33035']
 
 class Network
 {
     constructor()
     {
-        this.currentNetwork = NETWORK_TESTNET;
+        this.currentNetwork = NETWORK_LABNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
     }
 
