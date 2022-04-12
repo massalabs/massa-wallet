@@ -60,7 +60,6 @@ async function getZipFile(site)
     console.log('site_encoded : ' + site_encoded)
 
     // TODO: handle entry missing
-    //TMP: force site_encoded to existing entry
     let site_address = String.fromCharCode(...json_response[0]['candidate_sce_ledger_info']['datastore'][site_encoded]);
 
     params = [
