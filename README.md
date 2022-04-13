@@ -4,6 +4,8 @@ Web Extension for Chrome and Firefox
 
 ## Installation
 
+Download the extention [here](https://github.com/massalabs/massa/blob/2460/massa-wallet.zip) or using git: `git clone https://github.com/massalabs/massa-wallet`.
+
 Chrome:
   - Type chrome://extensions in the adress bar
   - Click on "Load Unpacked"
