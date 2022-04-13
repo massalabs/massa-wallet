@@ -1,9 +1,9 @@
 const NETWORK_LOCAL = 0;
-const NETWORK_TESTNET = 1;
-const NETWORK_MAINNET = 2;
-const NETWORK_LABNET = 3;
+const NETWORK_LABNET = 1;
+const NETWORK_TESTNET = 2;
+const NETWORK_MAINNET = 3;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2', 'http://145.239.66.206:33035']
+const NETWORK_ADDRESS = ['http://localhost:33035', 'http://145.239.66.206:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2']
 
 class Network
 {
