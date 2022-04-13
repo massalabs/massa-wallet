@@ -1,6 +1,6 @@
 # Massa wallet
 
-Web Extension for Chrome and Firefox
+Massa's plugin for Chrome and Firefox.
 
 ## Installation
 
