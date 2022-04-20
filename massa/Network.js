@@ -92,8 +92,7 @@ class Network
 
         console.log(json_response);
 
-        // let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
-        let site_address = "vTJpF4X6CNhmSQDRz91pkVfG2nH2hmaPderFia9QQn2EijM8x"
+        let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
 
         //Get zip
         json_response = await this.web3Client.publicApi().getAddresses([site_address]);
