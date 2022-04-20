@@ -26,6 +26,7 @@ function()
         }
     });
 
+    /* TODO : we will do it in another way
     //Listen to messages for the web extension
     window.addEventListener('message', function(event) {
         if (event.data.type == 'sign_content')
@@ -74,5 +75,5 @@ function()
             }
         });
       })
-
+      */
 })();

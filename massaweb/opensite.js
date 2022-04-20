@@ -18,15 +18,29 @@ window.onload = () => {
 //Get zip file from blockchain
 async function getZipFile(site, pageToLoad)
 {
+    //DEBUG local zip
+    //TODO : remove this
+    if (site == "site" || site == 'site1' || site == 'site2')
+    {
+        JSZipUtils.getBinaryContent('../' + site + '.zip', function(err, data) {
+            if(err) {
+                throw err; // or handle err
+            }
+        
+            openZip(data, site, pageToLoad);
+        });
+        return;
+    }
+
     //Get network address
-    let zip_bytes/*networkAddr*/ = await new Promise((resolve) => 
+    let zip_base64 = await new Promise((resolve) => 
     {
         mybrowser.runtime.sendMessage({'action': "get_zip_file", 'site': site}, (res) =>
         {
             resolve(res);
         });
     });
-
+    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
     openZip(zip_bytes, site, pageToLoad);
 }
 
@@ -102,7 +116,7 @@ class ZipLoaderHelper
     loadContent(src)
     {
         //Load img as base64, others as string
-        let isImage = (/\.(gif|jpg|jpeg|tiff|png)$/i).test(src);
+        let isImage = (/\.(gif|jpg|jpeg|tiff|png|ico)$/i).test(src);
         let isSvg = (/\.svg$/i).test(src);
         let type = isImage ? "base64" : "string";
         this.zip.file(src).async(type).then((content) => 
@@ -122,6 +136,8 @@ class ZipLoaderHelper
                 {
                     if (type == 'jpg')
                         type = 'jpeg';
+                    else if (type == 'ico')
+                        type = 'x-icon';
                     type += ';base64';
                 }
                 
@@ -140,29 +156,65 @@ class ZipLoaderHelper
     {
         this.html = this.contents[this.pageToLoad];
 
+        //TODO : use dom parser instead
+
         //Replace css
-        this.html = this.html.replace(/<link.*href=["'](?!http)(.*)["']>/gi, (str, p1) =>
+        this.html = this.html.replace(/<link.+?href=["'](?!http)(.+?)["'].*?>/gi, (str, p1) =>
         {
-            return "<style>" + this.contents[p1] + "</style>"; // replace link with inline style
+            let contentIndex = p1;
+            if (p1.substring(0, 2) == './')
+                contentIndex = p1.substring(2);
+            if (str.match(/rel=["']icon["']/i))
+            {
+                //console.log('icon ' + p1);
+                return str.replace(p1, this.contents[contentIndex]); // replace href part with base64 content
+            }
+            if (str.match(/rel=["']apple-touch-icon["']/i))
+            {
+                //console.log('apple icon ' + p1);
+                str = str.replace(/rel=["']apple-touch-icon["']/i, 'rel="apple-touch-icon-precomposed"'); // change rel attribute
+                return str.replace(p1, this.contents[contentIndex]); // replace href part with base64 content
+            }
+            //console.log('str='+str);
+            if (str.match(/rel=["']stylesheet["']/i))
+            {
+                //console.log('replace style ' + p1);
+                //console.log('str=' + str);
+                return "<style>" + this.contents[contentIndex] + "</style>"; // replace link with inline style
+            }
+            
+            //Unknown link rel attribute
+            return str;
         });
 
+        //console.log(this.html);
+
         //Replace images
-        this.html = this.html.replace(/<img.*src=["'](?!http)(.*)["']>/gi, (str, p1) =>
+        this.html = this.html.replace(/<img.*src=["'](?!http)([^"']*)["'].*?>/gi, (str, p1) =>
         {
-            return str.replace(p1, this.contents[p1]); // replace src part with base64 content
+            let contentIndex = p1;
+            if (p1.substring(0, 2) == './')
+                contentIndex = p1.substring(2);
+            return str.replace(p1, this.contents[contentIndex]); // replace src part with base64 content
         });
 
         //Handle links within the site
-        this.html = this.html.replace(/<a.*href=["'](?!http|massa)(.*)["']>/gi, (str, p1) =>
+        this.html = this.html.replace(/<a.*href=["'](?!http|massa)([^"']*)["'].*?>/gi, (str, p1) =>
         {
-            return str.replace(p1, '/massaweb/opensite.html?url=' + this.site + '&page_to_load=' + p1); // replace src part with base64 content
+            let page = p1;
+            if (p1.substring(0, 2) == './')
+                page = p1.substring(2);
+            return str.replace(p1, '/massaweb/opensite.html?url=' + this.site + '&page_to_load=' + page); // replace src part with base64 content
         });
 
         //Replace js
         //We can't use inline script so we have to trick...
         let js = '<textarea id="massa_js_content" style="display:none">';
-        this.html = this.html.replace(/<script.*src=["'](?!http)(.*)["']><\/script>/gi, (str, p1) =>
+        this.html = this.html.replace(/<script.*src=["'](?!http)([^"']*)["'].*?><\/script>/gi, (str, p1) =>
         {
+            if (p1.substring(0, 2) == './')
+                p1 = p1.substring(2);
+            //console.log('replace js ' + p1);
             js += this.contents[p1] + "\r\n";
             return "";
         });
@@ -170,9 +222,12 @@ class ZipLoaderHelper
         //Add inline js
         this.html = this.html.replace(/<script(?:(?!src).)*>(.*)<\/script>/gi, (str, p1) =>
         {
+            //console.log('replace inline js');
             js += p1 + "\r\n";
             return "";
         });
+
+        //console.log(this.html);
 
         //Replace inline scripts in html (onclick='' etc...)
         js += this.compileJS();
@@ -193,7 +248,7 @@ class ZipLoaderHelper
         var match = null;
     
         //Find 'on...' events inside html
-        var pattern = /(<(.*?)on([a-zA-Z]+)\s*=\s*('|")(.*)('|")(.*?))(>)/mgi;
+        var pattern = /(<(.*?)\s+on([a-zA-Z]+)\s*=\s*('|")(.*)('|")(.*?))(>)/mgi;
     
         while (match = pattern.exec(this.html)) {
             var arr = [];
