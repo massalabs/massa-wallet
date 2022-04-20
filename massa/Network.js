@@ -1,8 +1,9 @@
 const NETWORK_LOCAL = 0;
-const NETWORK_TESTNET = 1;
-const NETWORK_MAINNET = 2;
+const NETWORK_LABNET = 1;
+const NETWORK_TESTNET = 2;
+const NETWORK_MAINNET = 3;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2'];
+const NETWORK_ADDRESS = ['http://localhost:33035', 'http://145.239.66.206:33035', "https://test.massa.net/api/v2", 'https://massa.net/api/v2'];
 
 
 const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
@@ -13,7 +14,7 @@ class Network
 {
     constructor()
     {
-        this.currentNetwork = NETWORK_TESTNET;
+        this.currentNetwork = NETWORK_LABNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
 
         this.currentAccount = null;
@@ -91,11 +92,15 @@ class Network
 
         console.log(json_response);
 
-        let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
+        // let site_address = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][site_encoded]);
+        let site_address = "vTJpF4X6CNhmSQDRz91pkVfG2nH2hmaPderFia9QQn2EijM8x"
 
         //Get zip
         json_response = await this.web3Client.publicApi().getAddresses([site_address]);
-        let zip_base64 = String.fromCharCode(...json_response[0]['sce_ledger_info']['datastore'][MASSA_WEB]);
+        var zip_base64 = "";
+        for(var i = 0; i < json_response[0]['candidate_sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud'].length; ++i){
+            zip_base64+= (String.fromCharCode(json_response[0]['candidate_sce_ledger_info']['datastore']['2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud'][i]));
+        }
         let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
         return zip_bytes;
     }
