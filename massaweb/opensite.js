@@ -53,7 +53,7 @@ async function getZipFile(site)
     let params = [
         [
           // DNS address
-          "2HvWB97xBc41LkhBMqTqEpsEGbaXYi2HnGiLBzFPSeBdVS58Ew"
+          "8ZmTMdpawAYRrTRvsyDvTJgoNTr3krjuHG3JhGU3g1SYpqJiB"
         ]
     ];
     let json_response = await request(networkAddr, 'get_addresses', params);
