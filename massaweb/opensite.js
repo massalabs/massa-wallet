@@ -164,6 +164,13 @@ class ZipLoaderHelper
             let contentIndex = p1;
             if (p1.substring(0, 2) == './')
                 contentIndex = p1.substring(2);
+                
+            if (!this.contents.hasOwnProperty(contentIndex))
+            {
+                console.log('trying to load file ' + contentIndex + ' not found in the zip file');
+                return "";
+            }
+            
             if (str.match(/rel=["']icon["']/i))
             {
                 //console.log('icon ' + p1);
@@ -193,6 +200,11 @@ class ZipLoaderHelper
             let contentIndex = p1;
             if (p1.substring(0, 2) == './')
                 contentIndex = p1.substring(2);
+            if (!this.contents.hasOwnProperty(contentIndex))
+            {
+                console.log('trying to load file ' + contentIndex + ' not found in the zip file');
+                return "";
+            }
             return str.replace(p1, this.contents[contentIndex]); // replace src part with base64 content
         });
 
@@ -208,14 +220,17 @@ class ZipLoaderHelper
         //Replace js
         //We can't use inline script so we have to trick...
         let js = '';
-        let jsLength = 0;
         this.html = this.html.replace(/<script.*src=["'](?!http)([^"']*)["'].*?><\/script>/gi, (str, p1) =>
         {
             if (p1.substring(0, 2) == './')
                 p1 = p1.substring(2);
             //console.log('replace js ' + p1);
+            if (!this.contents.hasOwnProperty(p1))
+            {
+                console.log('trying to load file ' + p1 + ' not found in the zip file');
+                return "";
+            }
             js += this.contents[p1] + "\r\n";
-            jsLength += this.contents[p1].length;
             return "";
         });
 
