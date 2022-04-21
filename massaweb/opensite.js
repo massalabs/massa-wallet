@@ -62,7 +62,7 @@ function openZip(data, site, pageToLoad)
 
         //Add jsloader.js
         newHTML.write('<script src="jsloader.js" type="text/javascript"></script>');
-        
+ 
         //Add inject.js
         newHTML.write('<script src="../inject.js" type="text/javascript"></script>');
 
@@ -180,14 +180,12 @@ class ZipLoaderHelper
             {
                 //console.log('replace style ' + p1);
                 //console.log('str=' + str);
-                return "<style>" + this.contents[contentIndex] + "</style>"; // replace link with inline style
+                return "<style>" + this.contents[contentIndex].replace(/\/\*# sourceMappingURL=.*\*\//g, '') + "</style>"; // replace link with inline style
             }
             
             //Unknown link rel attribute
             return str;
         });
-
-        //console.log(this.html);
 
         //Replace images
         this.html = this.html.replace(/<img.*src=["'](?!http)([^"']*)["'].*?>/gi, (str, p1) =>
@@ -209,13 +207,15 @@ class ZipLoaderHelper
 
         //Replace js
         //We can't use inline script so we have to trick...
-        let js = '<textarea id="massa_js_content" style="display:none">';
+        let js = '';
+        let jsLength = 0;
         this.html = this.html.replace(/<script.*src=["'](?!http)([^"']*)["'].*?><\/script>/gi, (str, p1) =>
         {
             if (p1.substring(0, 2) == './')
                 p1 = p1.substring(2);
             //console.log('replace js ' + p1);
             js += this.contents[p1] + "\r\n";
+            jsLength += this.contents[p1].length;
             return "";
         });
 
@@ -227,13 +227,15 @@ class ZipLoaderHelper
             return "";
         });
 
-        //console.log(this.html);
 
         //Replace inline scripts in html (onclick='' etc...)
         js += this.compileJS();
-        js += '</textarea>';
+
+        //Avoid html chars conversion
+        js = js.replace(/&/g, '&amp;');
         
         //Add textarea containing js scripts (will be loaded with jsloader)
+        js = '<textarea id="massa_js_content" style="display:none">' + js + '</textarea>';
         let bodyEnd = this.html.indexOf('</body>');
         this.html = this.html.substring(0, bodyEnd) + js + this.html.substring(bodyEnd);
 
