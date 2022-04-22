@@ -3,11 +3,11 @@ const NETWORK_LABNET = 1;
 const NETWORK_TESTNET = 2;
 const NETWORK_MAINNET = 3;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', 'http://51.75.131.129:33035', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
+const NETWORK_ADDRESS = ['http://localhost:33035', 'http://145.239.66.206:33035', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
 
 
 //const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
-const MASSA_DNS = "2efRNX24yQ6jP2QbkSLr6yLXusmFnRK7C6DF59kncYnCEZqHFu";
+const MASSA_DNS = "884DHgGzZK8Sm43WjfFHnXTVH3dPHVNZTkfSbz1yvW44wFbAK";
 const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
 
 
