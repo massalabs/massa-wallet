@@ -7,7 +7,7 @@ const NETWORK_ADDRESS = ['http://localhost:33035', 'http://51.75.131.129:33035',
 
 
 //const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
-const MASSA_DNS = "8ZmTMdpawAYRrTRvsyDvTJgoNTr3krjuHG3JhGU3g1SYpqJiB";
+const MASSA_DNS = "2efRNX24yQ6jP2QbkSLr6yLXusmFnRK7C6DF59kncYnCEZqHFu";
 const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
 
 
