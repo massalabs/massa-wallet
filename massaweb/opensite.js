@@ -161,33 +161,26 @@ class ZipLoaderHelper
         //Replace css
         this.html = this.html.replace(/<link.+?href=["'](?!http)(.+?)["'].*?>/gi, (str, p1) =>
         {
-            let contentIndex = p1;
-            if (p1.substring(0, 2) == './')
-                contentIndex = p1.substring(2);
-                
-            if (!this.contents.hasOwnProperty(contentIndex))
-            {
-                console.log('trying to load file ' + contentIndex + ' not found in the zip file');
-                return "";
-            }
+            let content = this.getContent(p1);
+            if (content === false) return "";
             
             if (str.match(/rel=["']icon["']/i))
             {
                 //console.log('icon ' + p1);
-                return str.replace(p1, this.contents[contentIndex]); // replace href part with base64 content
+                return str.replace(p1, content); // replace href part with base64 content
             }
             if (str.match(/rel=["']apple-touch-icon["']/i))
             {
                 //console.log('apple icon ' + p1);
                 str = str.replace(/rel=["']apple-touch-icon["']/i, 'rel="apple-touch-icon-precomposed"'); // change rel attribute
-                return str.replace(p1, this.contents[contentIndex]); // replace href part with base64 content
+                return str.replace(p1, content); // replace href part with base64 content
             }
             //console.log('str='+str);
             if (str.match(/rel=["']stylesheet["']/i))
             {
                 //console.log('replace style ' + p1);
                 //console.log('str=' + str);
-                return "<style>" + this.contents[contentIndex].replace(/\/\*# sourceMappingURL=.*\*\//g, '') + "</style>"; // replace link with inline style
+                return "<style>" + content.replace(/\/\*# sourceMappingURL=.*\*\//g, '') + "</style>"; // replace link with inline style
             }
             
             //Unknown link rel attribute
@@ -197,15 +190,9 @@ class ZipLoaderHelper
         //Replace images
         this.html = this.html.replace(/<img.*src=["'](?!http)([^"']*)["'].*?>/gi, (str, p1) =>
         {
-            let contentIndex = p1;
-            if (p1.substring(0, 2) == './')
-                contentIndex = p1.substring(2);
-            if (!this.contents.hasOwnProperty(contentIndex))
-            {
-                console.log('trying to load file ' + contentIndex + ' not found in the zip file');
-                return "";
-            }
-            return str.replace(p1, this.contents[contentIndex]); // replace src part with base64 content
+            let content = this.getContent(p1);
+            if (content === false) return "";
+            return str.replace(p1, content); // replace src part with base64 content
         });
 
         //Handle links within the site
@@ -214,6 +201,8 @@ class ZipLoaderHelper
             let page = p1;
             if (p1.substring(0, 2) == './')
                 page = p1.substring(2);
+            if (page.substring(0, 1) == '/')
+                page = page.substring(1);
             return str.replace(p1, '/massaweb/opensite.html?url=' + this.site + '&page_to_load=' + page); // replace src part with base64 content
         });
 
@@ -222,15 +211,9 @@ class ZipLoaderHelper
         let js = '';
         this.html = this.html.replace(/<script.*src=["'](?!http)([^"']*)["'].*?><\/script>/gi, (str, p1) =>
         {
-            if (p1.substring(0, 2) == './')
-                p1 = p1.substring(2);
-            //console.log('replace js ' + p1);
-            if (!this.contents.hasOwnProperty(p1))
-            {
-                console.log('trying to load file ' + p1 + ' not found in the zip file');
-                return "";
-            }
-            js += this.contents[p1] + "\r\n";
+            let content = this.getContent(p1);
+            if (content === false) return "";
+            js += content + "\r\n";
             return "";
         });
 
@@ -256,6 +239,20 @@ class ZipLoaderHelper
 
         //Ready
         this.ready = true;
+    }
+
+    getContent(path)
+    {
+        if (path.substring(0, 2) == './')
+            path = path.substring(2);
+        if (path.substring(0, 1) == '/')
+            path = path.substring(1);
+        if (!this.contents.hasOwnProperty(path))
+        {
+            console.log('trying to load file ' + path + ' not found in the zip file');
+            return false;
+        }
+        return this.contents[path];
     }
 
     //Replace inline scripts (onclick='' etc...) with js code
