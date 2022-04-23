@@ -4,7 +4,7 @@ Massa's plugin for Chrome and Firefox.
 
 ## Installation
 
-- Download the extension [here](https://github.com/massalabs/massa/blob/2460/massa-wallet.zip) or using git: `git clone https://github.com/massalabs/massa-wallet`.
+- Download the extension using git: `git clone https://github.com/massalabs/massa-wallet`.
 
 - Install the extension
   - Chrome:
