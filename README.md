@@ -1,31 +1,31 @@
 # The Walking nerds - Massa wallet
 
-Web Extension pour Chrome et Firefox
+Web Extension for Chrome and Firefox
 
 ## Installation 
 
-Sur Chrome :
-- Taper l'url chrome://extensions dans la barre d'adresse
-- Cliquer sur "Charger l'extension non empaquetée"
-- Sélectionner le dossier massa-wallet
+On Chrome:
+- Type the url chrome://extensions in the address bar
+- Click on "Load unpackaged extension"
+- Select the massa-wallet folder
 
-Sur Firefox :
-- Taper l'url about:debugging dans la barre d'adresse
-- Cliquer sur "Ce Firefox"
-- Cliquer sur "Charger un module complémentaire temporaire"
-- Sélectionner le fichier manifest.json dans le dossier massa-wallet
+On Firefox:
+- Type the url about:debugging in the address bar
+- Click on "This Firefox"
+- Click on "Load a temporary add-on"
+- Select the manifest.json file in the massa-wallet folder
 
 ## Utilisation
 
-### Ouverture de fichiers zip
+### Opening zip files
 
-Une fois l'extension installée, l'icône massa est visible en haut à droite du navigateur
+Once the extension is installed, the massa icon is visible at the top right of the browser
 
-La démo permet de naviguer localement sur des sites au format .zip, situés dans le dossier massa-wallet.
-Il suffit de taper dans la barre d'adresse massa://nom_du_fichier_zip
+The demo allows you to browse locally on sites in .zip format, located in the massa-wallet folder.
+Just type in the address bar massa://nom_du_fichier_zip
 
-Si vous ajouter d'autres fichiers zip, il faudra recharger l'extension dans le navigateur (sur chrome://extensions ou about:debugging) pour qu'ils deviennent accessibles.
+If you add other zip files, you will have to reload the extension in the browser (on chrome://extensions or about:debugging) so that they become accessible.
 
-Un test d'ouverture de fichier zip depuis la blockchain est displonible sur massa://testblockchain
+A zip file opening test from the blockchain is available on massa://testblockchain
 
-N.B : Le mot de passe est prérempli par défaut pour simplifier les tests (DefaultP@ssword123).
+N.B: The password is pre-filled by default to simplify testing (DefaultP@ssword123).
