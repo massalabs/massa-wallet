@@ -3,11 +3,10 @@ const NETWORK_LABNET = 1;
 const NETWORK_TESTNET = 2;
 const NETWORK_MAINNET = 3;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', 'http://145.239.66.206:33035', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
+const NETWORK_ADDRESS = ['http://localhost:33035', 'https://labnet.massa.net/api/v2', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
 
 
-//const MASSA_DNS = "2QsZ5P3oU1w8bTPjxFaFqcBJjTuJDDxV2Y6BuwHuew1kH8rxTP";
-const MASSA_DNS = "2R4zRvGc5GcX4eCWrM5zsboFKodCUuWa7X8biiDBQMoLohwH4N";
+const MASSA_DNS = "29s67VyX7KMUSwZqdqMUnhCm4PX5EaScTYYTnpw98Fwb9JCYah";
 const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
 
 
@@ -15,7 +14,7 @@ class Network
 {
     constructor()
     {
-        this.currentNetwork = NETWORK_LABNET;
+        this.currentNetwork = NETWORK_TESTNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
 
         this.currentAccount = null;
