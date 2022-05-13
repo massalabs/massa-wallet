@@ -1,24 +1,27 @@
-import MassaProvider from './MassaProvider.js';
 import Network from './Network.js';
 import Wallet from './Wallet.js';
-import Vault from './Vault.js';
 import Storage from './Storage.js';
+import Vault from './Vault.js';
 
 class MassaController
 {
     constructor()
     {
         //Classes
-        this.provider = new MassaProvider();
         this.network = new Network();
-        this.wallet = new Wallet(this.network);
-        this.vault = new Vault();
+        this.wallet = new Wallet(this.network.web3Client.wallet());
+        this.vault = new Vault(this.network.web3Client.vault());
 
         //State
         this.connected = false;
-        this.mnemonic = '';
 
+        //Notifications/Confirmations
         this.pendingMessages = [];
+    }
+
+    getWeb3Client()
+    {
+        return this.network.web3Client;
     }
 
     //Message
@@ -32,7 +35,6 @@ class MassaController
         this.pendingMessages.splice(index, 1);
     }
 
-    //Vault
     async getState()
     {
         let vault = await Storage.get('vault');
@@ -40,97 +42,87 @@ class MassaController
         return {'hasVault' : vault !== null && typeof(vault) !== undefined, 
             'connected': this.connected, 
             'pending' : this.pendingMessages,
+            'network': this.network.currentNetwork,
             addresses };
     }
 
-    async initVault(password)
+
+    //Vault
+    async initVault(password, recover)
     {
-        this.vault.init(password);
+        //Set password
+        this.vault.setPassword(password);
 
-        let addresses = this.wallet.getAddresses();        
-
+        //Init vault with first account and mnemonic
+        if (!recover)
+        {
+            this.vault.init();
+            await this.saveVault();
+        }
+        
+        //Return wallet addresses and selected network
+        let addresses = this.wallet.getAddresses();    
         this.connected = true;
-        if (this.mnemonic == '')
-            this.mnemonic = this.vault.getMnemonic(this.wallet.accounts[addresses[0]].bytes);
-
-        this.network.init(this.wallet.accounts[addresses[0]], this.network.currentNetwork);
-
-        await this.saveVault();
-
         return { network: this.network.currentNetwork, addresses };
     }
 
     async loadVault(password)
     {
-        this.vault.init(password);
+        //Set password
+        this.vault.setPassword(password);
 
+        //Decrypt
         let encrypted = await Storage.get('vault');
-        
-        let dataObj;
-        try {
-            dataObj = await this.vault.decrypt(encrypted);
-        }
-        catch(e)
-        {
-            return {'error' : e.toString()};
-        }
-        this._onVaultLoaded(dataObj);
+        let dataObj = await this.vault.decryptVault(encrypted);
 
+        //console.log(dataObj);
+        this.network.setNetwork(dataObj.network);
+        this.wallet.loadAccounts(dataObj.accounts);
+
+        //Return wallet addresses and selected network
         let addresses = this.wallet.getAddresses();
-
         this.connected = true;
         return { network: this.network.currentNetwork, addresses};
     }
 
-    async recoverVault(mnemonic)
-    {
-        let bytes = Buffer.from(this.vault.recoverWithMnemonic(mnemonic), 'hex');
-        this.wallet.addAccountFromBytes(bytes);
-        this.mnemonic = mnemonic;
-    }
-
-    async exportVault()
-    {
-        return this.mnemonic;
-    }
-
     async saveVault()
     {
-        let dataObj = {
-            network: this.network.currentNetwork,
-            privKeys: this.wallet.privKeys,
-            mnemonic: this.mnemonic,
-        }
-        let encrypted = await this.vault.encrypt(dataObj);
+        let encrypted = await this.vault.encryptVault();
         await Storage.set('vault', encrypted);
     }
 
-    _onVaultLoaded(dataObj)
+    recoverVault(mnemonic)
     {
-        this.wallet.loadAccounts(dataObj.privKeys);
-        this.network.init(this.wallet.getDefaultAccount(), dataObj.network);
-        this.mnemonic = dataObj.mnemonic;
+        this.vault.recoverVault(mnemonic);
+    }
+
+    exportVault()
+    {
+        return this.vault.exportVault().mnemonic;
     }
 
 
     //Wallet
     async addAccount(privKeyTxt = null)
     {
-        let address;
+        let account;
 
         //Get new address from previous one (allow to recover multiple addresses with one mnemonic)
-        if (privKeyTxt === null && this.wallet.privKeys.length > 0)
+        let lastAccount = this.wallet.getLastAccount();
+        if (privKeyTxt === null && lastAccount !== null)
         {
-            let bytes = xbqcrypto.hash_sha256(this.wallet.privKeys[this.wallet.privKeys.length-1]);
-            address = this.wallet.addAccountFromBytes(bytes);
+            let bytes = xbqcrypto.hash_sha256(lastAccount.privateKey);
+            account = await this.wallet.addAccountFromBytes(bytes);
         }
         else
-            address = this.wallet.addAccount(privKeyTxt);
+        {
+            account = await this.wallet.addAccount(privKeyTxt);
+        }
 
-        if (this.connected)
+        if (account !== false && this.connected)
             await this.saveVault();
 
-        return address;
+        return account;
     }
 
     async getBalances()
@@ -152,12 +144,8 @@ class MassaController
 
         await this.saveVault();
     }
-
-    getNetwork()
-    {
-        return this.network.networkAddress;
-    }
-
+    
+    //Zip
     async getZipFile(site)
     {
         return this.network.getZipFile(site);
@@ -166,23 +154,7 @@ class MassaController
     //Transaction
     async sendTransaction(params)
     {
-        let latestPeriod;
-        try {
-            latestPeriod = await this.network.getLatestPeriod() + 5;
-        }
-        catch(e) { console.error(e); return {error: 'error getting last period'}; }
-
-        //console.log(params);
-
-        let fromAccount = this.wallet.accounts[params.from];
-        let res;
-        try {
-            res = await this.network.sendTransaction(fromAccount, params.to, params.amount, params.fees, latestPeriod);
-        }
-        catch(e) { console.error(e); return {error: 'error sending transaction'}; }
-
-        //let res = await this.wallet.send(params.from, params.to, params.amount, params.fees, latestPeriod);
-        //console.log(res);
+        let res = await this.wallet.sendTransaction(params.from, params.to, params.amount, params.fees);
 
         var trans_infos = ""
             + "From: " +  params.from + "<br>"
@@ -193,10 +165,12 @@ class MassaController
         return trans_infos;
     }
 
+    //Useful method
+    /*
     async sleep(ms)
     {
         return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+    }*/
 }
 
 export default MassaController;

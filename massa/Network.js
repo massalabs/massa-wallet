@@ -17,34 +17,16 @@ class Network
         this.currentNetwork = NETWORK_TESTNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
 
-        this.currentAccount = null;
-        this.web3Client = null;
-    }
-
-    init(account, network)
-    {
-        this.currentNetwork = network;
-        this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
-        this.setAccount(account);
+        this.web3Client = massa.ClientFactory.createDefaultClient(this.networkAddress);
     }
 
     setNetwork(network)
     {
         this.currentNetwork = network;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
-        this.web3Client = ClientFactory.createDefaultClient(this.networkAddress, this.currentAccount);
+        this.web3Client.setNewDefaultProvider(this.networkAddress);
     }
-
-    setAccount(account)
-    {
-        this.currentAccount = {
-            publicKey: account.b58cpubkey,
-            privateKey: account.b58cprivkey,
-            address: account.address
-        };
-        this.web3Client = ClientFactory.createDefaultClient(this.networkAddress, this.currentAccount);
-    }
-
+    
     async getBalances(addresses)
     {
         if (addresses.length == 0) 
@@ -68,21 +50,6 @@ class Network
         return res.last_slot.period;
     }
 
-    async sendTransaction(fromAccount, toAddr, amount, fees)
-    {
-        const account = {
-            publicKey: fromAccount.b58cpubkey,
-            privateKey: fromAccount.b58cprivkey,
-            address: fromAccount.address
-        };
-
-        //TODO : accoutn remove and signContent called 
-        return await this.web3Client.wallet().sendTransaction({
-            fee: 0,
-            amount: 1,
-            recipientAddress: toAddr
-        }, account);
-    }
 
     async getZipFile(site)
     {

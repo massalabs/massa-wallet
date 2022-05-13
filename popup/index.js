@@ -50,7 +50,7 @@ class PopupController
                 {
                     this.mainContainer.show();
                     this.updateWallet(res.addresses);
-
+                    this.selectNetWork.val(res.network);
                     this.handlePendingMessages();
                 }
                 else
@@ -93,6 +93,7 @@ class PopupController
             {
                 if (this.handleError(res))
                     return;
+                this.recoverContainer.hide();
                 this.createPasswordContainer.hide();
                 this.mainContainer.show();
 
@@ -404,10 +405,10 @@ class PopupController
                 mybrowser.runtime.sendMessage({action: "message_result", answer: res, message, messageIndex});
                 if (res)
                 {
-                    Message('signature done');
+                    Message('signature done', () => window.close());
                 }
                 else
-                    Message('signature refused');
+                    Message('signature refused', () => window.close());
             });
         }
     }

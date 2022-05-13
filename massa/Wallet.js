@@ -1,64 +1,101 @@
 class Wallet
 {
-    constructor(network)
+    constructor(web3Wallet)
     {
-        this.network = network;
-
-        this.accounts = {};
-        this.privKeys = [];
+        this.web3Wallet = web3Wallet;
     }
 
-    async loadAccounts(privKeys)
+    loadAccounts(accounts)
     {
-        this.accounts = {};
-        this.privKeys = [];
-        for (let i in privKeys)
-            this.addAccount(privKeys[i]);
+        this.web3Wallet.setBaseAccount(accounts[0]);
+        this.web3Wallet.addAccountsToWallet(accounts);
+        //console.log({msg:'set base account', 'account': accounts[0]});
+        //console.log({msg:'get base account', 'account': this.web3Wallet.getBaseAccount()});
     }
 
-    getDefaultAccount()
+    getBaseAccount()
     {
-        return this.accounts[Object.keys(this.accounts)[0]];
+        return this.web3Wallet.getBaseAccount();
     }
 
-    hasAccount(addr)
+    setBaseAccount(account)
     {
-        return this.accounts.hasOwnProperty(addr);
+        return this.web3Wallet.setBaseAccount(account);
+    }
+
+    getLastAccount()
+    {
+        let accounts = this.web3Wallet.getWalletAccounts();
+        return accounts.length > 0 ? accounts[accounts.length-1] : null;
+    }
+
+    getAccount(address)
+    {
+        return this.web3Wallet.getWalletAccountByAddress(address);
     }
 
     getAddresses()
     {
-        return Object.keys(this.accounts);
+        let accounts = this.web3Wallet.getWalletAccounts();
+        return accounts.map((obj) => obj.address);
     }
 
     //Add new account, or existing account with private key
-    addAccount(privKeyTxt = null)
+    async addAccount(privKeyTxt = null)
     {
-        let randomBytes = window.crypto.getRandomValues(new Uint8Array(32));
-        privKeyTxt = privKeyTxt ? privKeyTxt : xbqcrypto.deduce_private_base58check(randomBytes);
-
-        let account = this._parseKey(privKeyTxt);
-        if (this.hasAccount(account.address))
+        //Add account to web3Wallet
+        let account;
+        if (privKeyTxt == null)
+            account = await this.web3Wallet.constructor.walletGenerateNewAccount();
+        else
         {
-            alert('Address already present in wallet.');
-            return false;
+            let accounts = await this.web3Wallet.addPrivateKeysToWallet([privKeyTxt]);
+            if (accounts.length > 0)
+                account = accounts[accounts.length-1];
+            else
+                return false;
         }
 
-        account.bytes = randomBytes;
-
-        this.accounts[account.address] = account;
-        this.privKeys.push(privKeyTxt);
-
-        return account.address;
+        return account;
     }
 
-    addAccountFromBytes(bytes)
+    async addAccountFromBytes(bytes)
     {
-        let addr = this.addAccount(xbqcrypto.deduce_private_base58check(bytes));
-        this.accounts[addr].bytes = bytes;
-        return addr;
+        return await this.addAccount(xbqcrypto.deduce_private_base58check(bytes));
     }
 
+
+    //Sign bytes compact
+    signContent(bytesCompact)
+    {
+        let account = this.getBaseAccount();
+
+        // Parse private key
+        let parsed = xbqcrypto.parse_private_base58check(account.privateKey);
+        let privKey = Secp256k1.uint256(parsed.privkey, 16);
+
+        // Hash byte compact
+        let hash_encoded_data = xbqcrypto.hash_sha256(bytesCompact);
+        let digest = Secp256k1.uint256(hash_encoded_data)
+
+        // Sign the digest
+        const sig = Secp256k1.ecsign(privKey, digest)
+        return xbqcrypto.base58check_encode(xbqcrypto.Buffer.concat([xbqcrypto.Buffer.from(sig.r, "hex"), xbqcrypto.Buffer.from(sig.s, "hex")]))
+    }
+
+    //Send transaction
+    async sendTransaction(fromAddr, toAddr, amount, fees)
+    {
+        let fromAccount = this.getAccount(fromAddr);
+        return await this.web3Wallet.sendTransaction({
+            fee: fees,
+            amount: amount,
+            recipientAddress: toAddr
+        }, fromAccount);
+    }
+
+    /* OLD CODE
+    
     //Sign transaction
     signTransaction(transaction) 
     {    
@@ -70,89 +107,6 @@ class Wallet
     
         return this.signContent(encoded_data);
     }
-
-    //Sign bytes compact
-    signContent(bytesCompact)
-    {
-        //TODO : selected account
-        let account = this.getDefaultAccount();
-
-        // Hash byte compact
-        let hash_encoded_data = xbqcrypto.hash_sha256(bytesCompact);
-            
-        // Signing a digest
-        let digest = Secp256k1.uint256(hash_encoded_data)
-        const sig = Secp256k1.ecsign(account.privkey, digest)
-        return xbqcrypto.base58check_encode(xbqcrypto.Buffer.concat([xbqcrypto.Buffer.from(sig.r, "hex"), xbqcrypto.Buffer.from(sig.s, "hex")]))
-    }
-
-    //Send amount to another address
-    /* TODO : remove
-    async send(fromAddr, toAddr, amountStr, feeStr, latestPeriod)
-    {
-        if (!this.hasAccount(fromAddr))
-            return {'error': 'wrong address'}; // should not happen
-
-        let account = this.accounts[fromAddr];
-
-        //Value to send
-        let sendamount = null;
-        let sendamount_mul = -1;
-        try {
-            sendamount = new Decimal(amountStr);
-            sendamount_mul = sendamount.times(1e9);
-        } catch(e) { sendamount_mul = -1; }
-        if(isNaN(sendamount_mul) || (sendamount_mul < 0) || (sendamount_mul > (Math.pow(2, 64) - 1)))
-            return {'error': 'wrong amount'};
-
-        //Fees
-        let sendfee = null;
-        let sendfee_mul = -1;
-        try {
-            sendfee = new Decimal(feeStr);
-            sendfee_mul = sendfee.times(1e9);
-        } catch(e) { sendamount_mul = -1; }
-        if(isNaN(sendfee_mul) || (sendfee_mul < 0) || (sendfee_mul > (Math.pow(2, 64) - 1)))
-            return {'error': 'wrong fees'};
-
-        //Send to addr
-        let parsed = '';
-        let sendtopkh = '';
-        try {
-            parsed = xbqcrypto.parse_address(toAddr);
-            sendtopkh = parsed.pubkeyhash;
-        } catch(e) { sendtopkh = '' }
-
-        if (sendtopkh == '')
-            return {'error': 'wrong destination address'};
-
-        var trans_infos = ""
-            + "From: " +  fromAddr + "<br>"
-            + "To: " +  toAddr + "<br>"
-            + "Amount: " +  sendamount + " coins<br>"
-            + "Fee: " +  sendfee + " coins<br>";
-
-        try {
-            var transac = {"content": {"op": {"Transaction": {}}}}
-
-            transac.content["sender_public_key"] = account.b58cpubkey
-            transac.content["fee"] = sendfee.toString()
-            transac.content["expire_period"] = latestPeriod
-            transac.content.op.Transaction["recipient_address"] = toAddr
-            transac.content.op.Transaction["amount"] = sendamount.toString()
-            
-            transac["signature"] = this.signContent(transac, account)
-        } catch(e) { 
-            return {'error': 'Error while generating transaction: ' + e};
-        }
-
-
-        //Send transaction
-        //let resJson = await this.network.request('send_operations', [[transac]]);
-        //trans_infos += "Tx: " + resJson[0];
-        return trans_infos;
-    }*/
-
     _parseKey(privKeyTxt)
     {
         let account = {b58cprivkey : privKeyTxt};
@@ -182,6 +136,7 @@ class Wallet
 
         return account;
     }
+    */
 }
 
 export default Wallet;
