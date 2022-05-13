@@ -32,7 +32,7 @@ async function getZipFile(site, pageToLoad)
         return;
     }
 
-    //Get network address
+    //Get zip bytes
     let zip_base64 = await new Promise((resolve) => 
     {
         mybrowser.runtime.sendMessage({'action': "get_zip_file", 'site': site}, (res) =>
@@ -40,7 +40,17 @@ async function getZipFile(site, pageToLoad)
             resolve(res);
         });
     });
-    let zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
+
+    let zip_bytes;
+    try {
+        zip_bytes = Uint8Array.from(atob(zip_base64), c => c.charCodeAt(0));
+    }
+    catch(e)
+    {
+        let siteNameDom = document.getElementById('site_name');
+        siteNameDom.innerHTML = siteNameDom.innerHTML + '<br>this site does not exist on the selected network';
+        return;
+    }
     openZip(zip_bytes, site, pageToLoad);
 }
 

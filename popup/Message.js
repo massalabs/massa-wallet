@@ -9,24 +9,31 @@ function AskConfirm(message, onRes)
 		'message': message,
 		'buttons': 
 		{
-			'Valider': () => onRes(true),
-			'Annuler': () => onRes(false)
-		}
+			'Ok': () => onRes(true),
+			'Cancel': () => onRes(false)
+		},
+		'onClose': () => onRes(false)
 	});
 }
 
-function Message(mess, title)
+function Message(mess, title, onClose)
 {
-	if (typeof(title) == 'undefined')
+	if (typeof(title) !== 'string')
+	{
+		onClose = title;
 		title = 'Message';
+	}
+	if (typeof(onClose) == 'undefined')
+		onClose = () => {};
 	return MessageBox(
 	{
 		'title': title,
 		'message': mess,
 		'buttons': 
 		{
-			'Ok': () => {}
-		}
+			'Ok': onClose
+		},
+		'onClose': onClose
 	});
 }
 
@@ -36,7 +43,8 @@ function MessageBox(options)
 	var defaults = {
 		'title': "",
 		'message': "",
-		'buttons': {'Ok': () => {}}
+		'buttons': {'Ok': () => {}},
+		'onClose': () => {}
 	}
 	options = $.extend(defaults, options);
 
@@ -65,7 +73,7 @@ function MessageBox(options)
 	boxContainer.append(box);
 	$('body').append(boxContainer);
 
-	boxContainer.click(() => boxContainer.remove());
+	boxContainer.click(() => { boxContainer.remove(); options.onClose(); });
 	box.click((e) => e.stopPropagation());
 
 	return box;

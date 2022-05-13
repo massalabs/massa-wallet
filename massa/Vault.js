@@ -1,39 +1,41 @@
-//Vault encryptor
-//Loaded as js scripts in background.html :
-//import { encryptor } from '/lib/browser-passworder.js';
-//import * as bip39 from '/lib/bip39.browser.js';
-
+//Vault wrapper
 class Vault
 {
-    constructor()
+    constructor(web3Vault)
     {
-        this.password = null;
+        this.web3Vault = web3Vault;
     }
 
-    init(password)
+    setPassword(password)
     {
-        this.password = password;
+        this.web3Vault.setPassword(password);
     }
 
-    //Encryption
-    async encrypt(dataObj)
+    init()
     {
-        return await encryptor.encrypt(this.password, dataObj);
+        this.web3Vault.init();
     }
-    async decrypt(encrypted)
+
+    async decryptVault(encrypted)
     {
-        return await encryptor.decrypt(this.password, encrypted);
+        let res = await this.web3Vault.decryptVault(encrypted);
+        this.web3Vault.mnemonic = res.mnemonic;
+        return res;
     }
     
-
-    //Mnemonic
-    getMnemonic(dataObj)
+    async encryptVault()
     {
-        return bip39.entropyToMnemonic(dataObj);
+        return await this.web3Vault.encryptVault();
     }
-    recoverWithMnemonic(mnemonic)
+
+    exportVault()
     {
-        return bip39.mnemonicToEntropy(mnemonic);
+        return this.web3Vault.exportVault();
+    }
+
+    recoverVault(mnemonic)
+    {
+        this.web3Vault.recoverVault(mnemonic);
     }
 }
 

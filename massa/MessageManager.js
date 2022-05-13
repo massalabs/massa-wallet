@@ -59,6 +59,12 @@ class MessageManager
             return this.answerChrome;
         }
 
+        if (request.action == 'get_web3_client')
+        {
+            this.answerChrome = this.controller.getWeb3Client(); 
+            return this.answerChrome;
+        }
+
         if (request.action == 'get_pending_messages')
         {
             this.answerChrome = this.controller.pendingMessages; 
@@ -95,9 +101,7 @@ class MessageManager
 
         if (request.action == 'vault_init')
         {
-            if (!request.recover)
-                await this.controller.addAccount();
-            this.answerChrome = await this.controller.initVault(request.password);
+            this.answerChrome = await this.controller.initVault(request.password, request.recover);
             return this.answerChrome;
         }
 
@@ -110,7 +114,7 @@ class MessageManager
         if (request.action == 'vault_recover')
         {
             try {
-                await this.controller.recoverVault(request.mnemonic);
+                this.controller.recoverVault(request.mnemonic);
             }
             catch(e)
             {
@@ -134,7 +138,10 @@ class MessageManager
         {
             try { 
                 let res = await this.controller.addAccount(request.key);
-                this.answerChrome = {address: res};
+                if (res === false)
+                    this.answerChrome = {error: 'this key is already in wallet'};
+                else
+                    this.answerChrome = {address: res.address};
                 return this.answerChrome;
             }
             catch(e) { 

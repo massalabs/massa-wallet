@@ -1,31 +1,29 @@
 # The Walking nerds - Massa wallet
 
-Web Extension pour Chrome et Firefox
+Web Extension for Chrome et Firefox
 
 ## Installation 
 
-Sur Chrome :
-- Taper l'url chrome://extensions dans la barre d'adresse
-- Cliquer sur "Charger l'extension non empaquetée"
-- Sélectionner le dossier massa-wallet
+On Chrome :
+- Type chrome://extensions in the address bar
+- Click on "Load Unpacked" and select massa-wallet folder
 
-Sur Firefox :
-- Taper l'url about:debugging dans la barre d'adresse
-- Cliquer sur "Ce Firefox"
-- Cliquer sur "Charger un module complémentaire temporaire"
-- Sélectionner le fichier manifest.json dans le dossier massa-wallet
+On Firefox :
+- Type about:debugging dans la barre d'adresse
+- Click on "This Firefox"
+- Click on "Load Temporary Add-on"
+- Select manifest.json file in the massa-wallet folder
 
-## Utilisation
+## Usage
 
-### Ouverture de fichiers zip
+Once the extension is installed, massa icon become visible in the top right of the browser.
 
-Une fois l'extension installée, l'icône massa est visible en haut à droite du navigateur
+The functionallity are :
+- Create you wallet (first use)
+- Connect to your wallet (later use)
+- Get you mnemonic passphrase
+- Recover your wallet with your mnemonic
+- Add more accounts
+- Send transaction
 
-La démo permet de naviguer localement sur des sites au format .zip, situés dans le dossier massa-wallet.
-Il suffit de taper dans la barre d'adresse massa://nom_du_fichier_zip
-
-Si vous ajouter d'autres fichiers zip, il faudra recharger l'extension dans le navigateur (sur chrome://extensions ou about:debugging) pour qu'ils deviennent accessibles.
-
-Un test d'ouverture de fichier zip depuis la blockchain est displonible sur massa://testblockchain
-
-N.B : Le mot de passe est prérempli par défaut pour simplifier les tests (DefaultP@ssword123).
+N.B : The password is currently auto-filled to simplify the tests (DefaultP@ssword123).

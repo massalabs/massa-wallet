@@ -29,13 +29,20 @@ export default Storage = {
         }
     },
 
-    'set': (key, val) =>
+    'set': async (key, val) =>
     {
         let obj = {};
         obj[key] = val;
         if (IS_CHROME)
         {
-            chrome.storage[storageArea].set(obj);
+            return new Promise((resolve, reject) => 
+            {
+                chrome.storage[storageArea].set(obj, () =>
+                {
+                    resolve();
+                });
+            });
+            //chrome.storage[storageArea].set(obj);
         }
         else
         {
