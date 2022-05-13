@@ -1,18 +1,19 @@
 # The Walking nerds - Massa wallet
 
-Web Extension for Chrome et Firefox
+Web Extension for Chrome and Firefox
 
 ## Installation 
 
-On Chrome :
-- Type chrome://extensions in the address bar
-- Click on "Load Unpacked" and select massa-wallet folder
+On Chrome:
+- Type the url chrome://extensions in the address bar
+- Click on "Load unpackaged extension"
+- Select the massa-wallet folder
 
-On Firefox :
-- Type about:debugging dans la barre d'adresse
+On Firefox:
+- Type the url about:debugging in the address bar
 - Click on "This Firefox"
-- Click on "Load Temporary Add-on"
-- Select manifest.json file in the massa-wallet folder
+- Click on "Load a temporary add-on"
+- Select the manifest.json file in the massa-wallet folder
 
 ## Usage
 
