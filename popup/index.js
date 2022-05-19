@@ -1,5 +1,14 @@
-let IS_CHROME = /Chrome/.test(navigator.userAgent);
-let mybrowser = IS_CHROME ? chrome : browser;
+const IS_CHROME = /Chrome/.test(navigator.userAgent);
+const mybrowser = IS_CHROME ? chrome : browser;
+
+const CONFIRM_MESSAGES = {
+    'deploySmartContract': {msg: 'Deploy smart contract ?', ok: 'Smart contract deployed with Tx :', cancel: 'Deployment refused'}, 
+    'callSmartContract': {msg: 'Call smart contract ?', ok: 'Smart contract called with Tx :', cancel: 'Call refused'}, 
+    /*'readSmartContract', 'executeReadOnlySmartContract',*/
+    'sendTransaction': {msg: 'Send transaction ?', ok: 'Transaction successful with Tx :', cancel: 'Transaction refused'}, 
+    'buyRolls': {msg: 'Buy rolls ?', ok: 'Rolls bought with Tx :', cancel: 'Buy refused'}, 
+    'sellRolls': {msg: 'Sell rolls ?', ok: 'Rolls sold with Tx :', cancel: 'Sell refused'}
+};
 
 $(document).ready(() => new PopupController());
 
@@ -12,6 +21,7 @@ class PopupController
         this.createPasswordContainer = $('.create_password_container');
         this.passwordContainer = $('.password_container');
         this.recoverContainer = $('.recover_container');
+        this.baseAccountContainer = $('.wallet_base_account_addr');
 
         //Network select
         this.selectNetWork = this.mainContainer.find('#select_network');
@@ -28,7 +38,6 @@ class PopupController
 
         this.recovering = false;
         this.timeOutBalances = null;
-        this.timeOutMessages = null;
 
         this.initEvents();
 
@@ -49,8 +58,9 @@ class PopupController
                 if (res.connected)
                 {
                     this.mainContainer.show();
-                    this.updateWallet(res.addresses);
+                    this.updateWallet(res.addresses, res.baseAccountAddr);
                     this.selectNetWork.val(res.network);
+                    this.updateBalances();
                     this.handlePendingMessages();
                 }
                 else
@@ -64,6 +74,15 @@ class PopupController
 
     initEvents()
     {
+        this.mainContainer.find('.disconnect_btn').click(() =>
+        {
+            mybrowser.runtime.sendMessage({action: "disconnect"}, () =>
+            {
+                this.mainContainer.hide();
+                this.passwordContainer.show();
+            });
+        });
+
         //Create wallet
         this.createPasswordContainer.find('#wallet_create').click(() =>
         {
@@ -98,7 +117,7 @@ class PopupController
                 this.mainContainer.show();
 
                 this.selectNetWork.val(res.network);
-                this.updateWallet(res.addresses);
+                this.updateWallet(res.addresses, res.baseAccountAddr);
 
                 this.recovering = false;
 
@@ -120,7 +139,7 @@ class PopupController
                  this.mainContainer.show();
  
                  this.selectNetWork.val(res.network);
-                 this.updateWallet(res.addresses);
+                 this.updateWallet(res.addresses, res.baseAccountAddr);
 
                  this.updateBalances();
 
@@ -162,8 +181,6 @@ class PopupController
 
         this.mainContainer.find('#export_wallet').click(() =>
         {
-            //TODO : the seed is the first private key hash...
-            //the next account need to be hash of the first hash to retreive it
             mybrowser.runtime.sendMessage({action: "vault_export"}, (res) =>
             {
                 if (this.handleError(res))
@@ -220,7 +237,7 @@ class PopupController
         this.btnSend.click(async () =>
         {
             this.btnSend.prop('disabled', true);
-            let from = this.selectFrom.children('option[selected]').text();
+            let from = this.selectFrom.children('option:selected').text();
             let to = this.inputTo.val();
             let amount = this.inputAmount.val();
             let fees = this.inputFees.val();
@@ -229,7 +246,7 @@ class PopupController
             {
                 if (this.handleError(res))
                     return;
-                Message(res, 'Transaction succesful');
+                Message(res, 'Transaction successful');
                 this.btnSend.prop('disabled', false);
             });
         });
@@ -274,22 +291,22 @@ class PopupController
                 this.timeOutBalances = null;
                 return;
             }
-            this.onUpdateBalances(res.accounts)
+            this.onUpdateBalances(res.accounts);
             this.timeOutBalances = setTimeout(() => this.updateBalances(), 5000);
         });
     }
 
-    handleError(res)
+    handleError(res, callBack)
     {
         if (res.error)
         {
             console.log(res);
             if (res.error.indexOf('XMLHttpRequest') >= 0)
             {
-                Message("Can't connect to selected network", "Error");
+                Message("Can't connect to selected network", "Error", callBack);
                 return;
             }
-            Message(res.error, 'Error');
+            Message(res.error, 'Error', callBack);
             return true;
         }
         return false;
@@ -299,13 +316,17 @@ class PopupController
     /********************************************************************************************************************************
      * WALLET
      ********************************************************************************************************************************/
-    updateWallet(addresses)
+    updateWallet(addresses, baseAccountAddr)
     {
         this.walletContainer.children().remove();
         this.selectFrom.children().remove();
 
         for (let i in addresses)
             this.addWalletLine(addresses[i]);
+
+        //Set baseAccount
+        this.walletContainer.find('#wallet_line_' + baseAccountAddr + ' .wallet_addr').addClass('selected');
+        this.baseAccountContainer.html(baseAccountAddr);
     }
     
     onUpdateBalances(accounts)
@@ -320,6 +341,7 @@ class PopupController
         if (account.candidateBalance)
             balanceStr += '(' + account.candidateBalance + ')';
 
+        
         let balancefield = this.walletContainer.find('#wallet_line_' + account.address + ' .wallet_balance');
         balancefield.html(balanceStr);
     }
@@ -349,6 +371,15 @@ class PopupController
 
     initWalletLine(line, address)
     {
+        line.find('.wallet_addr').click(() =>
+        {
+            line.parent().find('.wallet_addr').removeClass('selected');
+            line.find('.wallet_addr').addClass('selected');
+            this.baseAccountContainer.html(address);
+
+            mybrowser.runtime.sendMessage({action: "wallet_set_base_account", address});
+        });
+
         line.find('.wallet_copy_addr').click(() =>
         {
             let copyText = $('<textarea></textarea');
@@ -375,41 +406,98 @@ class PopupController
     }
 
 
-    handlePendingMessages()
+    //Messaging
+    handlePendingMessages(hadMessages = false)
     {
-        mybrowser.runtime.sendMessage({action: "get_pending_messages"}, (res) =>
+        mybrowser.runtime.sendMessage({action: "get_pending_messages"}, async (res) =>
         {
             if (this.handleError(res))
             {
-                this.timeOutMessages = null;
                 return;
             }
             //Show pending messages
             if (res.length > 0)
             {
-                //TODO : show all pending messages
-                this.handlePendingMessage(res[0], 0);
-            }
+                await this.handlePendingMessage(res[0], 0);
 
-            //TODO
-            //this.timeOutMessages = setTimeout(() => this.handlePendingMessages(), 5000);
+                //show next message is any
+                this.handlePendingMessages(true);
+            }
+            //Close pop up after handling messages
+            else if (hadMessages)
+                window.close();
         });
     }
 
-    handlePendingMessage(message, messageIndex)
+    async handlePendingMessage(message, messageIndex)
     {
-        if (message.type == 'signature')
+        return new Promise((resolve) =>
         {
-            AskConfirm("Sign content ?<br>" + message.content, (res) =>
+            let confirmMessage = CONFIRM_MESSAGES[message.type];
+            if (typeof(confirmMessage) == 'undefined')
             {
-                mybrowser.runtime.sendMessage({action: "message_result", answer: res, message, messageIndex});
-                if (res)
-                {
-                    Message('signature done', () => window.close());
-                }
-                else
-                    Message('signature refused', () => window.close());
+                Message ('message not implemented for : ' + message.type, resolve);
+                return;
+            }
+
+            //Add an executor selector and send it to the controller
+            let executorSelector = '<div class="executor_selector">Executor: <select>';
+            let baseAddr = this.baseAccountContainer.text();
+            this.selectFrom.children('option').each(function()
+            {
+                executorSelector += '<option' + (this.innerText == baseAddr ? ' selected' : '') +'>' + this.innerHTML + '</option>';
             });
+            executorSelector += '</select></div>';
+            let box = AskConfirm(confirmMessage.msg + executorSelector + this.jsonToHtml(message.params), (agree) =>
+            {
+                let executor = box.find('.executor_selector select option:selected').text();
+                mybrowser.runtime.sendMessage({action: "message_result", answer: agree, msgId: message.msgId, messageIndex, executor}, (res) =>
+                {
+                    if (res && this.handleError(res, resolve))
+                        return;
+                    
+                    let box = Message(agree ? confirmMessage.ok + '<br>' + this.jsonToHtml(res, true) : confirmMessage.cancel, resolve);
+                    let oThis = this;
+                    box.find('.json_copy_tx').click(function()
+                    {
+                        oThis.copyToClipboard($(this).prev());
+                    });
+                });
+            });
+        });
+    }
+
+    //Convert json to readable html
+    jsonToHtml(json, withCopy = false)
+    {
+        let html = '<div class="json_values">';
+
+        for (let prop in json)
+        {
+            let val = json[prop];
+            if (prop == 'contractDataBase64')
+            {
+                prop = 'contractLength';
+                val = val.length;
+            }
+
+            let copyBtn = false;
+            let isTx = false;
+            if (parseInt(prop) != prop)
+                html += '<span>' + prop + ':</span>';
+            else
+            {
+                copyBtn = withCopy;
+                isTx = val.length > 24;
+            }
+
+            html += '<textarea ' + (isTx?'class="tx"':'') + '>' + val + '</textarea>';
+            if (copyBtn)
+                html += '<div class="json_copy_tx" title="copy tx"></div>';
+            html += '<br>';
         }
+
+        html += '</div>';
+        return html;
     }
 }

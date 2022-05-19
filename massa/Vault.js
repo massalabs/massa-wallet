@@ -6,6 +6,12 @@ class Vault
         this.web3Vault = web3Vault;
     }
 
+    cleanVault()
+    {
+        this.web3Vault.password = null;
+        this.web3Vault.mnemonic = null;
+    }
+
     setPassword(password)
     {
         this.web3Vault.setPassword(password);
