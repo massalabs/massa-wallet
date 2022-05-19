@@ -36,7 +36,7 @@ N.B : The password is currently auto-filled to simplify the tests (DefaultP@sswo
 The Web Extension inject a window.massa object for DAPP developpers.
 
 To access its methods, you need to enable it first.
-```
+```javascript
     window.massa.enable(true);
 ```
 
