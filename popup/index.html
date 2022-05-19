@@ -45,6 +45,7 @@
             <div>Enter your mnemonic phrase (24 words)</div>
             <textarea name="mnemonic" id="mnemonic"></textarea><br>
             <button class="btn" type="button" id="mnemonic_send">Recover wallet</button>
+            <div>Note that only your first account will be restored. You will have to use the 'Add' button to recover your other accounts.</div>
         </div>
 
         <div class="main_container">
@@ -63,7 +64,12 @@
                 </div>
             </div>
 
+            <div class="disconnect_container">
+                <div class="disconnect_btn">Disconnect</div>
+            </div>
+
             <div class="wallet">
+                <div class="wallet_base_account"><span>Base account : </span><span class="wallet_base_account_addr"></span></div>
                 <div class="wallet_header wallet_line">
                     <div class="wallet_addr">Addresses</div>
                     <div class="wallet_balance">Balances</div>

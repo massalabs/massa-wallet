@@ -63,6 +63,15 @@ a:hover { opacity: .5; }
 /*.box_buttons button:first-child { background-color: #009fca; border-color: #009fca; color:white; }*/
 .box_message textarea { width: 100%; height: 100px; resize: none; }
 
+.executor_selector { display: flex; justify-content: space-around; align-items: center; }
+.executor_selector select { width: 75%; }
+
+.json_values { background-color: #172230; color: white; padding: 5px; margin-top: 10px; }
+.json_values > * { display: inline-block; vertical-align: middle; margin-right: 5px; }
+.json_values > textarea { background-color: transparent; color: white; width: auto; height: 1em; resize: none; border: 0; outline: 0; padding: 0; }
+.json_values > textarea.tx { height: 3em; width: 75%; }
+.json_copy_tx { width: 16px; height: 16px; background-image: url(../img/copy.png); background-size: cover; background-repeat: no-repeat; cursor: pointer; }
+
 /***************************************************************************************************************
 * PASSWORD CREATION / CONNECTION
 ***************************************************************************************************************/
@@ -89,14 +98,20 @@ a:hover { opacity: .5; }
 .header > * { display: inline-block; vertical-align: middle; }
 .header > img { margin-right: 20px; }
 
+.disconnect_container { text-align: center; }
+.disconnect_btn { color: #e74e4e; cursor: pointer; display: inline-block; }
+
 
 /***************************************************************************************************************
 * WALLET
 ***************************************************************************************************************/
 .wallet { margin: 20px 0; }
+.wallet_base_account { color: #e74e4e; display: flex; }
+.wallet_base_account_addr { width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-left: 5px; }
 .wallet_header > * { font-size: 18px; }
 .wallet_line { display: flex; }
-.wallet_addr { width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid; padding: 2px; }
+.wallet_addr { cursor: pointer; width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid white; padding: 2px; }
+.wallet_addr.selected { color: #e74e4e; }
 .wallet_balance { width: 100px; text-align: center; border-right: 1px solid; padding: 2px; }
 .wallet_actions { width: 60px; display: flex; justify-content: space-around; padding: 2px; }
 .wallet_copy_addr { width: 16px; height: 16px; background-image: url(../img/copy.png); background-size: cover; background-repeat: no-repeat; cursor: pointer; }

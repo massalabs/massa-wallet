@@ -20,6 +20,11 @@ class Network
         this.web3Client = massa.ClientFactory.createDefaultClient(this.networkAddress);
     }
 
+    setDefaultNetwork()
+    {
+        this.setNetwork(NETWORK_TESTNET);
+    }
+
     setNetwork(network)
     {
         this.currentNetwork = network;
@@ -74,6 +79,20 @@ class Network
         }
         
         return zip_base64;
+    }
+
+    //Wrapped functions (usable by any DAPP)
+    async getAddresses(params)
+    {
+        return await this.web3Client.publicApi().getAddresses(params);
+    }
+    async getBlocks(params)
+    {
+        return await this.web3Client.publicApi().getBlocks(params);
+    }
+    async getOperations(params)
+    {
+        return await this.web3Client.publicApi().getOperations(params);
     }
 }
 

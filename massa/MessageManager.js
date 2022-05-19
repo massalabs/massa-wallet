@@ -1,20 +1,36 @@
 import MassaController from './MassaController.js';
 
-let IS_CHROME = /Chrome/.test(navigator.userAgent);
-let mybrowser = IS_CHROME ? chrome : browser;
+const IS_CHROME = /Chrome/.test(navigator.userAgent);
+const mybrowser = IS_CHROME ? chrome : browser;
+
+//Allowed messages that can be sent to the web extension
+const DAPP_CALLS = [
+    /* public */
+    'getAddresses', 'getBlocks', 'getOperations',
+    /* contracts */
+    'deploySmartContract', 'callSmartContract', 'readSmartContract', 'getParallelBalance',
+    'getFilteredScOutputEvents', 'getDatastoreEntry', 'executeReadOnlySmartContract', 
+    'getOperationStatus', 'awaitRequiredOperationStatus',
+    /* wallet */
+    'getBaseAccount', 'walletInfo', 'getWalletAddressesInfo', 'getAccountSequentialBalance', 
+    'sendTransaction', 'buyRolls', 'sellRolls'
+];
+
+//Calls that require user confirmation (show popup)
+const DAPP_CALLS_WITH_CONFIRM = [
+    'deploySmartContract', 'callSmartContract', /*'readSmartContract', 'executeReadOnlySmartContract',*/
+    'sendTransaction', 'buyRolls', 'sellRolls'
+];
+
 
 class MessageManager
 {
     constructor()
     {
         this.controller = new MassaController();
-
-        //TODO : handle this in a better way
-        this.userAnswer = null;
-        this.userData = null;
     }
 
-    //For chrome
+    //Wrapper function to handle Chrome or Firefox messaging system
     async onMessage(request, sender, sendResponse)
     {
         let res;
@@ -34,81 +50,111 @@ class MessageManager
 
     async _onMessage(request, sender, sendResponse)
     {
-        //Signatures
-        if (request.action == 'sign_content')
+        let fromExtension = false;
+        if (IS_CHROME)
+            fromExtension = sender.origin === 'chrome-extension://' + chrome.runtime.id;
+        else
+            fromExtension = sender.envType === 'addon_child' && sender.id === browser.runtime.id;
+
+        //console.log(request);
+
+        //Calls from injected page
+        if (DAPP_CALLS.indexOf(request.action) >= 0)
         {
-            //Add pending message
-            this.controller.addMessage({type: 'signature', content: request.content});
+            let needConfirm = DAPP_CALLS_WITH_CONFIRM.indexOf(request.action) >= 0
 
-            //Open popup
-            //TODO : left and top not working in firefox
-            chrome.windows.create({ url: chrome.runtime.getURL("popup/index.html"), type: 
-            "popup", height : 700, width : 400/*, left: screen.availWidth - 400, top: 0*/ });
-
-            //TODO : handle this in a better way
-            this.userAnswer = null;
-            this.userData = null;
-            this.answerChrome = await new Promise(async (resolve, reject) =>
+            if (needConfirm)
             {
-                while (this.userAnswer === null) // wait till user has answered
+                //Add pending message
+                let pendingMessage = {type: request.action, params: request.params, msgId: request.msgId};
+                this.controller.addMessage(pendingMessage);
+
+                //Open popup (TODO : how to check if already opened?)
+                //TODO : left and top not working in firefox
+                chrome.windows.create({ url: chrome.runtime.getURL("popup/index.html"), type: 
+                "popup", height : 700, width : 400/*, left: screen.availWidth - 400, top: 0*/ });
+
+                //Wait for user response
+                pendingMessage.userAnswer = null;
+                pendingMessage.userRes = null;
+                return await new Promise(async (resolve, reject) =>
                 {
-                    await this.sleep(100);
-                }
-                resolve(this.userData); // return html of the pageToLoad
-            });
-            return this.answerChrome;
-        }
-
-        if (request.action == 'get_web3_client')
-        {
-            this.answerChrome = this.controller.getWeb3Client(); 
-            return this.answerChrome;
-        }
-
-        if (request.action == 'get_pending_messages')
-        {
-            this.answerChrome = this.controller.pendingMessages; 
-            return this.answerChrome;
-        }
-
-        if (request.action == 'message_result')
-        {
-            if (request.message.type == 'signature')
+                    while (pendingMessage.userAnswer === null) // wait till user has answered
+                    {
+                        await this.sleep(100);
+                    }
+                    resolve(pendingMessage.userRes); // return response
+                });
+            }
+            else
             {
-                this.userAnswer = request.answer;
-                if (this.userAnswer)
-                    this.userData = this.controller.signContent(request.message.content);
+                if (typeof(this.controller[request.action]) !== 'function')
+                    return {error: 'function not implemented : ' + request.action};
 
-                this.controller.removeMessage(request.messageIndex);
+                return await this.controller[request.action](request.params);
             }
         }
 
+        
+        //Other messages are limited to the extension itself
+        if (!fromExtension)
+            return {};
+
+        //Response from user confirmation
+        if (request.action == 'message_result')
+        {
+            let pendingMessage = this.controller.pendingMessages[request.messageIndex];
+            if (typeof(pendingMessage) == 'undefined' || pendingMessage.msgId != request.msgId)
+                return {error: 'Message already treated'};
+
+            this.controller.removeMessage(request.messageIndex);
+
+            if (request.answer)
+            {
+                if (typeof(this.controller[pendingMessage.type]) !== 'function')
+                    return {error: 'function not implemented : ' + pendingMessage.type};
+                
+                pendingMessage.userRes = await this.controller[pendingMessage.type](pendingMessage.params, request.executor);
+            }
+
+            pendingMessage.userAnswer = request.answer;
+            return pendingMessage.userRes;
+        }
+
+
+        //Get current pending messages for the user
+        if (request.action == 'get_pending_messages')
+        {
+            return this.controller.pendingMessages; 
+        }
 
         //ZIP
         if (request.action == 'get_zip_file')
         {
-            this.answerChrome = await this.controller.getZipFile(request.site);
-            return this.answerChrome;
+            return await this.controller.getZipFile(request.site);
         }
         
 
         //Vault
         if (request.action == 'get_state')
         {
-            this.answerChrome = await this.controller.getState();
-            return this.answerChrome;
+            return await this.controller.getState();
         }
 
         if (request.action == 'vault_init')
         {
-            this.answerChrome = await this.controller.initVault(request.password, request.recover);
-            return this.answerChrome;
+            let res = await this.controller.initVault(request.password, request.recover);
+            //Send base account to content script
+            await this.sendToContentScript({'type': 'web_extension_res', 'msgId': 'base_account_changed', 'response': await this.controller.getBaseAccount()});
+            return res;
         }
 
         if (request.action == 'vault_load')
         {
-            this.answerChrome = await this.controller.loadVault(request.password);
-            return this.answerChrome;
+            let res = await this.controller.loadVault(request.password);
+            //Send base account to content script
+            await this.sendToContentScript({'type': 'web_extension_res', 'msgId': 'base_account_changed', 'response': await this.controller.getBaseAccount()});
+            return res;
         }
 
         if (request.action == 'vault_recover')
@@ -118,20 +164,21 @@ class MessageManager
             }
             catch(e)
             {
-                this.answerChrome = {error: 'invalid mnemonic'}; 
-                return this.answerChrome;
+                return {error: 'invalid mnemonic'};
             }
-            this.answerChrome = {};
-            return this.answerChrome;
+            return {};
         }
 
         if (request.action == 'vault_export')
         {
-            this.answerChrome = await this.controller.exportVault();
-            return this.answerChrome;
+            return await this.controller.exportVault();
         }
         
-
+        if (request.action == 'disconnect')
+        {
+            this.controller.disconnect();
+            return {};
+        }
 
         //Wallet
         if (request.action == 'wallet_add_account')
@@ -139,46 +186,62 @@ class MessageManager
             try { 
                 let res = await this.controller.addAccount(request.key);
                 if (res === false)
-                    this.answerChrome = {error: 'this key is already in wallet'};
+                    return {error: 'this key is already in wallet'};
                 else
-                    this.answerChrome = {address: res.address};
-                return this.answerChrome;
+                    return {address: res.address};
             }
             catch(e) { 
-                this.answerChrome = {error: 'invalid key'}; 
-                return this.answerChrome;
+                return {error: 'invalid key'};
             }
+        }
+
+        if (request.action == 'wallet_set_base_account')
+        {
+            let account = await this.controller.setBaseAccount(request.address);
+            //Send message to content script
+            await this.sendToContentScript({'type': 'web_extension_res', 'msgId': 'base_account_changed', 'response': account});
+            return {};
         }
 
         if (request.action == 'wallet_get_balances')
         {
             let res = await this.controller.getBalances();
-            this.answerChrome = {accounts: res};
-            return this.answerChrome;
+            return {accounts: res};
         }
 
         //Network
         if (request.action == 'network_select')
         {
-            let res = await this.controller.setNetwork(request.network);
-            this.answerChrome = {};
-            return this.answerChrome;
+            await this.controller.setNetwork(request.network);
+            return {};
         }
 
         //Transaction
         if (request.action == 'send_transaction')
         {
-            this.answerChrome = await this.controller.sendTransaction(request.params);
-            return this.answerChrome;
+            return await this.controller.sendTransactionInternal(request.params);
         }
 
-        this.answerChrome = {'error': 'request unknown', 'request': request};
-        return this.answerChrome;
+        return {'error': 'request unknown', 'request': request};
     }
 
     async sleep(ms)
     {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async sendToContentScript(message)
+    {
+        let tabList = await mybrowser.tabs.query({});
+        for (let tab of tabList) {
+            try {
+                await mybrowser.tabs.sendMessage(tab.id, message);
+            }
+            catch(e)
+            {
+                console.log('can not send to tab ' + tab.id);
+            }
+        }
     }
 }
 

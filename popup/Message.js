@@ -23,7 +23,7 @@ function Message(mess, title, onClose)
 		onClose = title;
 		title = 'Message';
 	}
-	if (typeof(onClose) == 'undefined')
+	if (typeof(onClose) !== 'function')
 		onClose = () => {};
 	return MessageBox(
 	{
