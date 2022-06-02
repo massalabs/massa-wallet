@@ -22,7 +22,7 @@ class Network
 
     setDefaultNetwork()
     {
-        this.setNetwork(NETWORK_TESTNET);
+        this.setNetwork(NETWORK_LABNET);
     }
 
     setNetwork(network)
