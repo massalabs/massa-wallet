@@ -126,7 +126,7 @@ class MassaController
         let lastAccount = this.wallet.getLastAccount();
         if (privKeyTxt === null && lastAccount !== null)
         {
-            let bytes = xbqcrypto.hash_sha256(lastAccount.privateKey);
+            let bytes = xbqcrypto.hash_blake3(lastAccount.privateKey);
             account = await this.wallet.addAccountFromBytes(bytes);
         }
         else

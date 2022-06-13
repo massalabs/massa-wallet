@@ -6,8 +6,8 @@ const NETWORK_MAINNET = 3;
 const NETWORK_ADDRESS = ['http://localhost:33035', 'https://labnet.massa.net/api/v2', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
 
 
-const MASSA_DNS = "29s67VyX7KMUSwZqdqMUnhCm4PX5EaScTYYTnpw98Fwb9JCYah";
-const MASSA_WEB = "2dzzGMAmBTMjYHRSszHGa3QYVTUVLoKzgsqmYizKGnsuhpoLud";
+const MASSA_DNS = "A12o8tw83tDrA52Lju9BUDDodAhtUp4scHtYr8Fj4iwhDTuWZqHZ";
+const MASSA_WEB = "2qbtmxh5pD3TH3McFmZWxvKLTyz2SKDYFSRL8ngQBJ4R6f3Duw";
 
 
 class Network
@@ -59,7 +59,7 @@ class Network
     async getZipFile(site)
     {
         //Get site address
-        let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_sha256('record'+site));
+        let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_blake3('record'+site));
         let json_response = await this.web3Client.publicApi().getAddresses([MASSA_DNS]);
 
         //console.log(json_response);
