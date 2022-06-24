@@ -40,7 +40,7 @@ The Web Extension inject a window.massa object for DAPP developpers.
 
 To access its methods, you need to enable it first.
 ```javascript
-    window.massa.enable(true);
+window.massa.enable(true);
 ```
 
 This class is a wrapper of massa-web3 library (https://github.com/massalabs/massa-web3)
