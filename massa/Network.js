@@ -2,45 +2,40 @@ const NETWORK_LOCAL = 0;
 const NETWORK_LABNET = 1;
 const NETWORK_TESTNET = 2;
 const NETWORK_MAINNET = 3;
+const NETWORK_INNONET = 4;
 
-const NETWORK_ADDRESS = ['http://localhost:33035', 'https://labnet.massa.net/api/v2', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2'];
+const NETWORK_ADDRESS = ['http://localhost:33035', 'https://labnet.massa.net/api/v2', 'https://test.massa.net/api/v2', 'https://massa.net/api/v2', 'http://37.187.156.118/test12'];
 
 
 const MASSA_DNS = "A12o8tw83tDrA52Lju9BUDDodAhtUp4scHtYr8Fj4iwhDTuWZqHZ";
 const MASSA_WEB = "2qbtmxh5pD3TH3McFmZWxvKLTyz2SKDYFSRL8ngQBJ4R6f3Duw";
 
 
-class Network
-{
-    constructor()
-    {
+class Network {
+    constructor() {
         this.currentNetwork = NETWORK_TESTNET;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
 
         this.web3Client = massa.ClientFactory.createDefaultClient(this.networkAddress);
     }
 
-    setDefaultNetwork()
-    {
+    setDefaultNetwork() {
         this.setNetwork(NETWORK_LABNET);
     }
 
-    setNetwork(network)
-    {
+    setNetwork(network) {
         this.currentNetwork = network;
         this.networkAddress = NETWORK_ADDRESS[this.currentNetwork];
         this.web3Client.setNewDefaultProvider(this.networkAddress);
     }
-    
-    async getBalances(addresses)
-    {
-        if (addresses.length == 0) 
+
+    async getBalances(addresses) {
+        if (addresses.length == 0)
             return [];
 
         const resJson = await this.web3Client.publicApi().getAddresses(addresses);
         let res = [];
-        for (let i = 0; i < resJson.length; i++) 
-        {
+        for (let i = 0; i < resJson.length; i++) {
             let address = resJson[i].address;
             let balance = resJson[i].ledger_info.final_ledger_info.balance;
             let candidateBalance = resJson[i].ledger_info.candidate_ledger_info.balance;
@@ -49,17 +44,15 @@ class Network
         return res;
     }
 
-    async getLatestPeriod()
-    {
+    async getLatestPeriod() {
         const res = await this.web3Client.publicApi().getNodeStatus();
         return res.last_slot.period;
     }
 
 
-    async getZipFile(site)
-    {
+    async getZipFile(site) {
         //Get site address
-        let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_blake3('record'+site));
+        let site_encoded = xbqcrypto.base58check_encode(xbqcrypto.hash_blake3('record' + site));
         let json_response = await this.web3Client.publicApi().getAddresses([MASSA_DNS]);
 
         //console.log(json_response);
@@ -74,24 +67,21 @@ class Network
         //console.log(json_response[0]['candidate_sce_ledger_info']['datastore']);
 
         var zip_base64 = "";
-        for(var i = 0; i < json_response[0]['candidate_sce_ledger_info']['datastore'][MASSA_WEB].length; ++i){
+        for (var i = 0; i < json_response[0]['candidate_sce_ledger_info']['datastore'][MASSA_WEB].length; ++i) {
             zip_base64 += (String.fromCharCode(json_response[0]['candidate_sce_ledger_info']['datastore'][MASSA_WEB][i]));
         }
-        
+
         return zip_base64;
     }
 
     //Wrapped functions (usable by any DAPP)
-    async getAddresses(params)
-    {
+    async getAddresses(params) {
         return await this.web3Client.publicApi().getAddresses(params);
     }
-    async getBlocks(params)
-    {
+    async getBlocks(params) {
         return await this.web3Client.publicApi().getBlocks(params);
     }
-    async getOperations(params)
-    {
+    async getOperations(params) {
         return await this.web3Client.publicApi().getOperations(params);
     }
 }
